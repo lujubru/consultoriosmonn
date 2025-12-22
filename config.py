@@ -4,7 +4,7 @@ from datetime import timedelta
 class Config:
     # Base de datos
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://usuario:password@localhost:5432/consultorio_db'
+        'postgresql://postgres:kEIIFmMcSnyrYwasaqtuYqqQbHkldTez@hopper.proxy.rlwy.net:57142/railway'
     
     # Fix para Railway (usa postgres:// en lugar de postgresql://)
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
@@ -29,4 +29,5 @@ class Config:
     
     # Costos
     COSTO_BASE_CONSULTA = 15000  # Pesos
+
     DESCUENTO_GRUPO_FAMILIAR = 0.15  # 15% descuento por integrante adicional

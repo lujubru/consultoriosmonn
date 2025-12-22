@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h1>¡Hola, {{ usuario.nombre }}! 👋</h1>
+        <p>Bienvenido a tu panel de paciente</p>
+    </div>
+
+    <!-- Resumen -->
+    <div class="grid">
+        <div class="card stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <h3>{{ turnos_proximos|length }}</h3>
+                <p>Turnos Próximos</p>
+            </div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-icon">💳</div>
+            <div class="stat-content">
+                <h3>{{ pagos_pendientes|length }}</h3>
+                <p>Pagos Pendientes</p>
+            </div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-icon">👨‍👩‍👧‍👦</div>
+            <div class="stat-content">
+                <h3>{{ grupo_familiar|length }}</h3>
+                <p>Familiares</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <section class="section">
+        <h2>Acciones Rápidas</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('nuevo_turno') }}" class="btn btn-primary btn-large">
+                📅 Solicitar Nuevo Turno
+            </a>
+            <a href="{{ url_for('mis_turnos') }}" class="btn btn-secondary">
+                📋 Ver Mis Turnos
+            </a>
+            <a href="{{ url_for('historial') }}" class="btn btn-secondary">
+                📖 Ver Historial
+            </a>
+        </div>
+    </section>
+
+    <!-- Próximos Turnos -->
+    {% if turnos_proximos %}
+    <section class="section">
+        <h2>Próximos Turnos</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Especialidad</th>
+                        <th>Paciente</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_proximos %}
+                    <tr>
+                        <td>{{ turno.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ turno.hora.strftime('%H:%M') }}</td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                            {% else %}
+                                {{ usuario.nombre }} {{ usuario.apellido }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ turno.estado.value }}">
+                                {{ turno.estado.value|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if turno.pago and turno.pago.estado.value == 'pendiente' %}
+                                <a href="{{ url_for('subir_comprobante', turno_id=turno.id) }}" 
+                                   class="btn btn-small">Subir Comprobante</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Pagos Pendientes -->
+    {% if pagos_pendientes %}
+    <section class="section">
+        <h2>⚠️ Pagos Pendientes</h2>
+        <div class="alert alert-warning">
+            <p>Tenés {{ pagos_pendientes|length }} pago(s) pendiente(s). Recordá subir tus comprobantes.</p>
+        </div>
+        {% for pago in pagos_pendientes %}
+        <div class="card">
+            <div class="card-body">
+                <h4>Turno: {{ pago.turno.fecha.strftime('%d/%m/%Y') }} - {{ pago.turno.hora.strftime('%H:%M') }}</h4>
+                <p>Especialidad: {{ pago.turno.especialidad.nombre }}</p>
+                <p>Monto: ${{ "%.2f"|format(pago.monto) }}</p>
+                
+                {% if not pago.comprobante %}
+                    <a href="{{ url_for('subir_comprobante', turno_id=pago.turno_id) }}" 
+                       class="btn btn-primary">Subir Comprobante</a>
+                {% else %}
+                    <p class="text-info">✓ Comprobante subido - En revisión</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- Grupo Familiar -->
+    {% if grupo_familiar %}
+    <section class="section">
+        <h2>Mi Grupo Familiar</h2>
+        <div class="grid">
+            {% for familiar in grupo_familiar %}
+            <div class="card">
+                <h4>{{ familiar.nombre }} {{ familiar.apellido }}</h4>
+                <p>DNI: {{ familiar.dni }}</p>
+                <p>{{ familiar.parentesco }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

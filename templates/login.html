@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container" style="max-width: 400px;">
+        <h1>Iniciar Sesión</h1>
+        
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="dni">DNI</label>
+                <input type="text" id="dni" name="dni" class="form-control" 
+                       pattern="[0-9]{7,8}" placeholder="12345678" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+        </form>
+
+        <div class="form-footer">
+            <p>¿No tenés cuenta? <a href="{{ url_for('register') }}">Registrate aquí</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

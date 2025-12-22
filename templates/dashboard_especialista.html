@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Especialista{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h1>Panel de Especialista</h1>
+        <p>Dr/a. {{ session.get('user_nombre') }}</p>
+    </div>
+
+    <!-- Resumen -->
+    <div class="grid">
+        <div class="card stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <h3>{{ turnos_hoy|length }}</h3>
+                <p>Turnos Hoy</p>
+            </div>
+        </div>
+
+        <div class="card stat-card">
+            <div class="stat-icon">🕐</div>
+            <div class="stat-content">
+                <h3>{{ turnos_proximos|length }}</h3>
+                <p>Próximos Turnos</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Turnos de Hoy -->
+    <section class="section">
+        <h2>📅 Agenda de Hoy</h2>
+        
+        {% if turnos_hoy %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>DNI</th>
+                        <th>Especialidad</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_hoy %}
+                    <tr>
+                        <td><strong>{{ turno.hora.strftime('%H:%M') }}</strong></td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                            {% else %}
+                                {{ turno.paciente.nombre }} {{ turno.paciente.apellido }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.dni }}
+                            {% else %}
+                                {{ turno.paciente.dni }}
+                            {% endif %}
+                        </td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>{{ turno.motivo_consulta or '-' }}</td>
+                        <td>
+                            <span class="badge badge-{{ turno.estado.value }}">
+                                {{ turno.estado.value|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if turno.estado.value in ['confirmado', 'pendiente'] %}
+                                <a href="{{ url_for('atender_turno', turno_id=turno.id) }}" 
+                                   class="btn btn-small btn-primary">Atender</a>
+                            {% else %}
+                                <span class="text-success">✓ Realizado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p>No tenés turnos programados para hoy.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Próximos Turnos -->
+    <section class="section">
+        <h2>🗓️ Próximos Turnos</h2>
+        
+        {% if turnos_proximos %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>Especialidad</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_proximos %}
+                    <tr>
+                        <td>{{ turno.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ turno.hora.strftime('%H:%M') }}</td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                            {% else %}
+                                {{ turno.paciente.nombre }} {{ turno.paciente.apellido }}
+                            {% endif %}
+                        </td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>
+                            <span class="badge badge-{{ turno.estado.value }}">
+                                {{ turno.estado.value|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No tenés turnos próximos programados.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Registro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h1>Crear Cuenta</h1>
+        <p class="subtitle">Completá el formulario para registrarte</p>
+
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+            <!-- Datos Personales -->
+            <fieldset>
+                <legend>Tus Datos</legend>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre *</label>
+                        <input type="text" id="nombre" name="nombre" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apellido">Apellido *</label>
+                        <input type="text" id="apellido" name="apellido" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dni">DNI *</label>
+                        <input type="text" id="dni" name="dni" class="form-control" pattern="[0-9]{7,8}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="tel" id="telefono" name="telefono" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Contraseña *</label>
+                        <input type="password" id="password" name="password" class="form-control" minlength="6" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password_confirm">Confirmar Contraseña *</label>
+                        <input type="password" id="password_confirm" name="password_confirm" class="form-control" minlength="6" required>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Grupo Familiar -->
+            <fieldset>
+                <legend>Grupo Familiar (Opcional)</legend>
+                <p class="info-text">⭐ Añadí integrantes para obtener descuentos</p>
+                
+                <div id="familiaresContainer">
+                    <!-- Los familiares se agregan dinámicamente -->
+                </div>
+
+                <button type="button" class="btn btn-secondary" onclick="agregarFamiliar()">
+                    + Agregar Familiar
+                </button>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">Registrarse</button>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Ya tengo cuenta</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let contadorFamiliares = 0;
+
+function agregarFamiliar() {
+    contadorFamiliares++;
+    const container = document.getElementById('familiaresContainer');
+    
+    const div = document.createElement('div');
+    div.className = 'familiar-item';
+    div.innerHTML = `
+        <h4>Familiar ${contadorFamiliares}</h4>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" name="familiar_nombre[]" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Apellido</label>
+                <input type="text" name="familiar_apellido[]" class="form-control">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>DNI</label>
+                <input type="text" name="familiar_dni[]" class="form-control" pattern="[0-9]{7,8}">
+            </div>
+            <div class="form-group">
+                <label>Parentesco</label>
+                <select name="familiar_parentesco[]" class="form-control">
+                    <option value="">Seleccionar</option>
+                    <option value="Cónyuge">Cónyuge</option>
+                    <option value="Hijo/a">Hijo/a</option>
+                    <option value="Padre/Madre">Padre/Madre</option>
+                    <option value="Hermano/a">Hermano/a</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+        </div>
+        <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">Eliminar</button>
+        <hr>
+    `;
+    
+    container.appendChild(div);
+}
+
+// Validar que las contraseñas coincidan
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('password_confirm').value;
+    
+    if (password !== confirm) {
+        e.preventDefault();
+        alert('Las contraseñas no coinciden');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Pagos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>💳 Gestión de Pagos</h1>
+
+    <!-- Pagos Pendientes de Aprobación -->
+    <section class="section">
+        <h2>⏳ Pagos Pendientes de Revisión ({{ pagos_pendientes|length }})</h2>
+        
+        {% if pagos_pendientes %}
+        <div class="pagos-grid">
+            {% for pago in pagos_pendientes %}
+            <div class="card pago-card">
+                <div class="pago-header">
+                    <h3>Turno #{{ pago.turno_id }}</h3>
+                    <span class="badge badge-warning">PENDIENTE</span>
+                </div>
+                
+                <div class="pago-info">
+                    <p><strong>Paciente:</strong> {{ pago.turno.paciente.nombre }} {{ pago.turno.paciente.apellido }}</p>
+                    <p><strong>DNI:</strong> {{ pago.turno.paciente.dni }}</p>
+                    <p><strong>Fecha Turno:</strong> {{ pago.turno.fecha.strftime('%d/%m/%Y') }} - {{ pago.turno.hora.strftime('%H:%M') }}</p>
+                    <p><strong>Especialidad:</strong> {{ pago.turno.especialidad.nombre }}</p>
+                    <p><strong>Monto:</strong> ${{ "%.2f"|format(pago.monto) }}</p>
+                    <p><strong>Subido:</strong> {{ pago.fecha_subida.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+
+                <div class="pago-comprobante">
+                    <a href="{{ url_for('ver_comprobante', pago_id=pago.id) }}" 
+                       class="btn btn-secondary btn-block" target="_blank">
+                        👁️ Ver Comprobante
+                    </a>
+                </div>
+
+                <div class="pago-actions">
+                    <form method="POST" action="{{ url_for('aprobar_pago', pago_id=pago.id) }}" 
+                          style="display: inline;" 
+                          onsubmit="return confirm('¿Aprobar este pago?')">
+                        <button type="submit" class="btn btn-success">✓ Aprobar</button>
+                    </form>
+
+                    <button type="button" class="btn btn-danger" 
+                            onclick="mostrarFormRechazo({{ pago.id }})">
+                        ✗ Rechazar
+                    </button>
+                </div>
+
+                <!-- Formulario de Rechazo (oculto) -->
+                <div id="formRechazo{{ pago.id }}" class="form-rechazo" style="display: none;">
+                    <form method="POST" action="{{ url_for('rechazar_pago', pago_id=pago.id) }}">
+                        <div class="form-group">
+                            <label>Motivo del rechazo:</label>
+                            <textarea name="observaciones" class="form-control" rows="3" required 
+                                      placeholder="Ej: Comprobante ilegible, datos incorrectos, etc."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-small">Confirmar Rechazo</button>
+                        <button type="button" class="btn btn-secondary btn-small" 
+                                onclick="ocultarFormRechazo({{ pago.id }})">Cancelar</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            <p>✓ No hay pagos pendientes de revisión</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Pagos Recientes -->
+    <section class="section">
+        <h2>📋 Pagos Recientes</h2>
+        
+        {% if pagos_recientes %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Turno</th>
+                        <th>Paciente</th>
+                        <th>DNI</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Fecha Aprobación</th>
+                        <th>Aprobado Por</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos_recientes %}
+                    <tr>
+                        <td>#{{ pago.turno_id }}</td>
+                        <td>{{ pago.turno.paciente.nombre }} {{ pago.turno.paciente.apellido }}</td>
+                        <td>{{ pago.turno.paciente.dni }}</td>
+                        <td>${{ "%.2f"|format(pago.monto) }}</td>
+                        <td>
+                            <span class="badge badge-{{ pago.estado.value }}">
+                                {{ pago.estado.value|replace('_', ' ')|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if pago.fecha_aprobacion %}
+                                {{ pago.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pago.aprobado_por %}
+                                {% set aprobador = pago.turno.paciente.query.filter_by(id=pago.aprobado_por).first() %}
+                                {{ aprobador.nombre if aprobador else 'Admin' }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pago.comprobante %}
+                                <a href="{{ url_for('ver_comprobante', pago_id=pago.id) }}" 
+                                   class="btn btn-small" target="_blank">Ver</a>
+                            {% endif %}
+                            
+                            {% if pago.estado.value == 'rechazado' %}
+                                <small class="text-danger">{{ pago.observaciones }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No hay pagos procesados recientemente.</p>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+function mostrarFormRechazo(pagoId) {
+    document.getElementById('formRechazo' + pagoId).style.display = 'block';
+}
+
+function ocultarFormRechazo(pagoId) {
+    document.getElementById('formRechazo' + pagoId).style.display = 'none';
+}
+</script>
+{% endblock %}

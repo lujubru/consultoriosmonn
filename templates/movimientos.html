@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Movimientos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📊 Movimientos</h1>
+
+    <!-- Filtros -->
+    <div class="card">
+        <form method="GET" action="{{ url_for('ver_movimientos') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fecha_desde">Desde</label>
+                    <input type="date" id="fecha_desde" name="fecha_desde" 
+                           class="form-control" value="{{ request.args.get('fecha_desde', '') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fecha_hasta">Hasta</label>
+                    <input type="date" id="fecha_hasta" name="fecha_hasta" 
+                           class="form-control" value="{{ request.args.get('fecha_hasta', '') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="tipo">Tipo</label>
+                    <select id="tipo" name="tipo" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="ingreso" {{ 'selected' if request.args.get('tipo') == 'ingreso' }}>Ingresos</option>
+                        <option value="egreso" {{ 'selected' if request.args.get('tipo') == 'egreso' }}>Egresos</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="{{ url_for('ver_movimientos') }}" class="btn btn-secondary">Limpiar</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumen -->
+    <div class="grid">
+        <div class="card stat-card success">
+            <h3>${{ "%.2f"|format(total_ingresos) }}</h3>
+            <p>Total Ingresos</p>
+        </div>
+        
+        <div class="card stat-card danger">
+            <h3>${{ "%.2f"|format(total_egresos) }}</h3>
+            <p>Total Egresos</p>
+        </div>
+        
+        <div class="card stat-card {{ 'success' if balance >= 0 else 'danger' }}">
+            <h3>${{ "%.2f"|format(balance) }}</h3>
+            <p>Balance</p>
+        </div>
+    </div>
+
+    <!-- Tabla de Movimientos -->
+    <section class="section">
+        <div class="section-header">
+            <h2>Listado de Movimientos</h2>
+            <a href="{{ url_for('nuevo_movimiento') }}" class="btn btn-primary">+ Nuevo Egreso</a>
+        </div>
+        
+        {% if movimientos %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Concepto</th>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimientos %}
+                    <tr class="{{ 'ingreso' if mov.tipo.value == 'ingreso' else 'egreso' }}">
+                        <td>{{ mov.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="badge badge-{{ mov.tipo.value }}">
+                                {{ '💰 INGRESO' if mov.tipo.value == 'ingreso' else '📉 EGRESO' }}
+                            </span>
+                        </td>
+                        <td>{{ mov.concepto }}</td>
+                        <td>{{ mov.descripcion or '-' }}</td>
+                        <td class="{{ 'text-success' if mov.tipo.value == 'ingreso' else 'text-danger' }}">
+                            {{ '+' if mov.tipo.value == 'ingreso' else '-' }}${{ "%.2f"|format(mov.monto) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No hay movimientos para mostrar con los filtros seleccionados.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

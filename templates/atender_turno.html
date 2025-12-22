@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Atender Turno{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h1>Atender Consulta</h1>
+
+        <!-- Información del Paciente -->
+        <div class="card">
+            <h3>Datos del Paciente</h3>
+            <div class="patient-info">
+                <p><strong>Nombre:</strong> 
+                    {% if turno.familiar %}
+                        {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                    {% else %}
+                        {{ turno.paciente.nombre }} {{ turno.paciente.apellido }}
+                    {% endif %}
+                </p>
+                <p><strong>DNI:</strong> 
+                    {% if turno.familiar %}
+                        {{ turno.familiar.dni }}
+                    {% else %}
+                        {{ turno.paciente.dni }}
+                    {% endif %}
+                </p>
+                <p><strong>Fecha:</strong> {{ turno.fecha.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Hora:</strong> {{ turno.hora.strftime('%H:%M') }}</p>
+                <p><strong>Especialidad:</strong> {{ turno.especialidad.nombre }}</p>
+                {% if turno.motivo_consulta %}
+                <p><strong>Motivo:</strong> {{ turno.motivo_consulta }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulario de Atención -->
+        <form method="POST" action="{{ url_for('atender_turno', turno_id=turno.id) }}">
+            <div class="form-group">
+                <label for="observaciones">Observaciones de la Consulta *</label>
+                <textarea id="observaciones" name="observaciones" class="form-control" 
+                          rows="8" required placeholder="Diagnóstico, indicaciones, tratamiento, etc."></textarea>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>📌 Recordatorio:</strong> Las observaciones quedarán registradas en el historial del paciente.
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    ✓ Finalizar Consulta
+                </button>
+                <a href="{{ url_for('dashboard_especialista') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

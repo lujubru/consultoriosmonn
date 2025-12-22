@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Simulación de Costo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container" style="max-width: 600px;">
+        <h1>💰 Resultado de la Simulación</h1>
+
+        <div class="card">
+            <h3>Detalle del Cálculo</h3>
+            <div class="simulador-result">
+                <p><strong>Costo Base:</strong> ${{ "%.2f"|format(costo_base) }}</p>
+                <p><strong>Integrantes Adicionales:</strong> {{ cant_familiares }}</p>
+                <p><strong>Descuento Aplicado:</strong> {{ "%.0f"|format(descuento_pct) }}%</p>
+                <hr>
+                <p class="total"><strong>Costo Final por Consulta:</strong> ${{ "%.2f"|format(costo_final) }}</p>
+                <p class="ahorro">Ahorrás: ${{ "%.2f"|format(ahorro) }}</p>
+            </div>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>✓ Beneficio Grupo Familiar</strong>
+            <p>Con {{ cant_familiares }} integrante(s) adicional(es), obtenés un {{ "%.0f"|format(descuento_pct) }}% de descuento en cada consulta.</p>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-large">Registrarme Ahora</a>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

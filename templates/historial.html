@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Historial Médico{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📖 Historial Médico</h1>
+
+    <!-- Historial del Titular -->
+    <section class="section">
+        <h2>Tu Historial</h2>
+        
+        {% if turnos_titular %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Especialidad</th>
+                        <th>Especialista</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_titular %}
+                    <tr>
+                        <td>{{ turno.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>
+                            {% if turno.especialista %}
+                                Dr/a. {{ turno.especialista.nombre }} {{ turno.especialista.apellido }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ turno.observaciones or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <a href="{{ url_for('descargar_historial_pdf', persona_id=0) }}" 
+           class="btn btn-secondary">📄 Descargar PDF</a>
+        {% else %}
+        <p class="text-muted">No tenés consultas registradas aún.</p>
+        {% endif %}
+    </section>
+
+    <!-- Historial del Grupo Familiar -->
+    {% if historial_familiar %}
+    <section class="section">
+        <h2>Historial Familiar</h2>
+        
+        {% for familiar, turnos in historial_familiar.items() %}
+        <div class="familiar-historial">
+            <h3>{{ familiar.nombre }} {{ familiar.apellido }}</h3>
+            <p class="text-muted">DNI: {{ familiar.dni }} | {{ familiar.parentesco }}</p>
+            
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Especialidad</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for turno in turnos %}
+                        <tr>
+                            <td>{{ turno.fecha.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ turno.especialidad.nombre }}</td>
+                            <td>{{ turno.observaciones or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <a href="{{ url_for('descargar_historial_pdf', persona_id=familiar.id) }}" 
+               class="btn btn-small btn-secondary">📄 Descargar PDF</a>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Egreso{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container" style="max-width: 600px;">
+        <h1>Registrar Nuevo Egreso</h1>
+
+        <form method="POST" action="{{ url_for('nuevo_movimiento') }}">
+            <div class="form-group">
+                <label for="tipo">Tipo de Movimiento *</label>
+                <select id="tipo" name="tipo" class="form-control" required>
+                    <option value="egreso" selected>Egreso</option>
+                    <option value="ingreso">Ingreso Manual</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="monto">Monto *</label>
+                <input type="number" id="monto" name="monto" class="form-control" 
+                       step="0.01" min="0" required placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="concepto">Concepto *</label>
+                <input type="text" id="concepto" name="concepto" class="form-control" 
+                       required placeholder="Ej: Alquiler, Sueldos, Insumos médicos">
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion">Descripción (Opcional)</label>
+                <textarea id="descripcion" name="descripcion" class="form-control" 
+                          rows="4" placeholder="Detalles adicionales del movimiento"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Registrar</button>
+                <a href="{{ url_for('ver_movimientos') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

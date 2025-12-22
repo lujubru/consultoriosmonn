@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Turnos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Mis Turnos</h1>
+
+    <!-- Turnos Pendientes -->
+    <section class="section">
+        <h2>📅 Turnos Próximos</h2>
+        
+        {% if turnos_pendientes %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Especialidad</th>
+                        <th>Paciente</th>
+                        <th>Estado</th>
+                        <th>Pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_pendientes %}
+                    <tr>
+                        <td>{{ turno.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ turno.hora.strftime('%H:%M') }}</td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                            {% else %}
+                                Titular
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ turno.estado.value }}">
+                                {{ turno.estado.value|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if turno.pago %}
+                                {% if turno.pago.estado.value == 'pendiente' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% elif turno.pago.estado.value == 'aprobado' %}
+                                    <span class="badge badge-success">Aprobado</span>
+                                {% elif turno.pago.estado.value == 'rechazado' %}
+                                    <span class="badge badge-danger">Rechazado</span>
+                                {% elif turno.pago.estado.value == 'abonado_efectivo' %}
+                                    <span class="badge badge-success">Abonado</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if turno.pago %}
+                                {% if turno.pago.estado.value == 'pendiente' and not turno.pago.comprobante %}
+                                    <a href="{{ url_for('subir_comprobante', turno_id=turno.id) }}" 
+                                       class="btn btn-small btn-primary">Subir Comprobante</a>
+                                {% elif turno.pago.estado.value == 'rechazado' %}
+                                    <a href="{{ url_for('subir_comprobante', turno_id=turno.id) }}" 
+                                       class="btn btn-small btn-warning">Resubir</a>
+                                    <small class="text-danger">{{ turno.pago.observaciones }}</small>
+                                {% elif turno.pago.comprobante %}
+                                    <a href="{{ url_for('ver_comprobante', pago_id=turno.pago.id) }}" 
+                                       class="btn btn-small" target="_blank">Ver</a>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if turno.estado.value in ['pendiente', 'confirmado'] %}
+                                <form method="POST" action="{{ url_for('cancelar_turno', turno_id=turno.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('¿Estás seguro de cancelar este turno?')">
+                                    <button type="submit" class="btn btn-small btn-danger">Cancelar</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p>No tenés turnos próximos agendados.</p>
+            <a href="{{ url_for('nuevo_turno') }}" class="btn btn-primary">Solicitar Turno</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Turnos Realizados -->
+    <section class="section">
+        <h2>✅ Turnos Realizados</h2>
+        
+        {% if turnos_realizados %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Especialidad</th>
+                        <th>Paciente</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_realizados %}
+                    <tr>
+                        <td>{{ turno.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                            {% else %}
+                                Titular
+                            {% endif %}
+                        </td>
+                        <td>{{ turno.observaciones or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Aún no tenés turnos realizados.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

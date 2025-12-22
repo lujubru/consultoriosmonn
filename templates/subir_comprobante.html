@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Subir Comprobante{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container" style="max-width: 600px;">
+        <h1>Subir Comprobante de Pago</h1>
+        
+        <!-- Información del Turno -->
+        <div class="card">
+            <h3>Detalle del Turno</h3>
+            <p><strong>Fecha:</strong> {{ turno.fecha.strftime('%d/%m/%Y') }}</p>
+            <p><strong>Hora:</strong> {{ turno.hora.strftime('%H:%M') }}</p>
+            <p><strong>Especialidad:</strong> {{ turno.especialidad.nombre }}</p>
+            <p><strong>Monto:</strong> ${{ "%.2f"|format(turno.pago.monto) }}</p>
+            
+            {% if turno.pago.estado.value == 'rechazado' %}
+            <div class="alert alert-danger">
+                <strong>⚠️ Comprobante Rechazado</strong>
+                <p>{{ turno.pago.observaciones }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Datos de Transferencia -->
+        <div class="card info-pago">
+            <h3>💳 Datos para Transferencia</h3>
+            <p><strong>CBU:</strong> 0000003100010000000000</p>
+            <p><strong>Alias:</strong> CONSULTORIO.MEDICO</p>
+            <p><strong>Titular:</strong> Consultorio Médico S.A.</p>
+            <p><strong>CUIT:</strong> 30-12345678-9</p>
+            <hr>
+            <p class="text-info">O podés abonar en efectivo en el consultorio</p>
+        </div>
+
+        <!-- Formulario -->
+        <form method="POST" action="{{ url_for('subir_comprobante', turno_id=turno.id) }}" 
+              enctype="multipart/form-data">
+            
+            <div class="form-group">
+                <label for="comprobante">Comprobante de Pago *</label>
+                <input type="file" id="comprobante" name="comprobante" 
+                       class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                <small class="form-text">Formatos: JPG, PNG, PDF (Máximo 5MB)</small>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>📌 Importante:</strong>
+                <ul>
+                    <li>El comprobante será revisado por nuestro equipo</li>
+                    <li>Recibirás una notificación una vez aprobado</li>
+                    <li>Si es rechazado, podrás volver a subirlo</li>
+                </ul>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">Subir Comprobante</button>
+                <a href="{{ url_for('mis_turnos') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

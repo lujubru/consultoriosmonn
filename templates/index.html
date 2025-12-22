@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Consultorio Médico{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Bienvenido a Nuestro Consultorio</h1>
+        <p class="lead">Atención médica de calidad para toda tu familia</p>
+        {% if not session.get('user_id') %}
+            <a href="{{ url_for('register') }}" class="btn btn-large">Registrarse Ahora</a>
+        {% else %}
+            <a href="{{ url_for('nuevo_turno') }}" class="btn btn-large">Solicitar Turno</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    <!-- Especialidades -->
+    <section class="section">
+        <h2>Nuestras Especialidades</h2>
+        <div class="grid">
+            {% for especialidad in especialidades %}
+            <div class="card">
+                <h3>{{ especialidad.nombre }}</h3>
+                <p>{{ especialidad.descripcion or 'Atención especializada' }}</p>
+                <p class="precio">${{ "%.2f"|format(especialidad.costo_consulta) }}</p>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('nuevo_turno') }}" class="btn">Solicitar Turno</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Beneficios Prepaga -->
+    <section class="section benefits">
+        <h2>🌟 Beneficios de Nuestra Prepaga</h2>
+        <div class="grid">
+            <div class="benefit-card">
+                <div class="icon">👨‍👩‍👧‍👦</div>
+                <h3>Descuento Familiar</h3>
+                <p>15% de descuento por cada integrante adicional de tu grupo familiar</p>
+            </div>
+            <div class="benefit-card">
+                <div class="icon">📅</div>
+                <h3>Turnos Online</h3>
+                <p>Solicita turnos 24/7 desde la comodidad de tu casa</p>
+            </div>
+            <div class="benefit-card">
+                <div class="icon">💳</div>
+                <h3>Múltiples Formas de Pago</h3>
+                <p>Transferencia bancaria o efectivo en el consultorio</p>
+            </div>
+            <div class="benefit-card">
+                <div class="icon">📋</div>
+                <h3>Historial Digital</h3>
+                <p>Accede a tu historial médico en cualquier momento</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simulador de Costo -->
+    <section class="section simulator">
+        <h2>💰 Simulá el Costo para Tu Familia</h2>
+        <div class="card">
+            <form method="POST" action="{{ url_for('simular_costo') }}">
+                <div class="form-group">
+                    <label>¿Cuántos integrantes adicionales tiene tu grupo familiar?</label>
+                    <input type="number" name="cant_familiares" min="0" max="10" value="0" class="form-control">
+                    <small>Costo base por consulta: ${{ "%.2f"|format(costo_base) }}</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Calcular Costo</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    {% if not session.get('user_id') %}
+    <section class="section cta">
+        <div class="cta-box">
+            <h2>¿Listo para cuidar tu salud?</h2>
+            <p>Registrate ahora y accedé a todos nuestros servicios</p>
+            <a href="{{ url_for('register') }}" class="btn btn-large">Crear Cuenta Gratis</a>
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

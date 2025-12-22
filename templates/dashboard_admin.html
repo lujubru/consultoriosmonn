@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Administrativo{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h1>Panel Administrativo</h1>
+        <p>{{ session.get('user_nombre') }} - {{ session.get('user_rol')|upper }}</p>
+    </div>
+
+    <!-- Métricas del Día -->
+    <div class="grid">
+        <div class="card stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <h3>{{ turnos_hoy|length }}</h3>
+                <p>Turnos Hoy</p>
+            </div>
+        </div>
+
+        <div class="card stat-card warning">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <h3>{{ pagos_pendientes }}</h3>
+                <p>Pagos por Revisar</p>
+            </div>
+        </div>
+
+        <div class="card stat-card success">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(ingresos_mes) }}</h3>
+                <p>Ingresos del Mes</p>
+            </div>
+        </div>
+
+        <div class="card stat-card danger">
+            <div class="stat-icon">📉</div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(egresos_mes) }}</h3>
+                <p>Egresos del Mes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance del Mes -->
+    <div class="card balance-card">
+        <h3>Balance Mensual</h3>
+        <div class="balance-amount {{ 'positive' if balance >= 0 else 'negative' }}">
+            ${{ "%.2f"|format(balance) }}
+        </div>
+        <p>{{ 'Superávit' if balance >= 0 else 'Déficit' }}</p>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <section class="section">
+        <h2>Acciones Rápidas</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('buscar_paciente') }}" class="btn btn-primary">
+                🔍 Buscar Paciente
+            </a>
+            <a href="{{ url_for('revisar_pagos') }}" class="btn btn-warning">
+                💳 Revisar Pagos ({{ pagos_pendientes }})
+            </a>
+            {% if session.get('user_rol') == 'admin' %}
+            <a href="{{ url_for('ver_movimientos') }}" class="btn btn-secondary">
+                📊 Ver Movimientos
+            </a>
+            <a href="{{ url_for('nuevo_movimiento') }}" class="btn btn-secondary">
+                ➕ Registrar Egreso
+            </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Turnos del Día -->
+    <section class="section">
+        <h2>📅 Agenda del Día ({{ 'today'|default('')|replace('today', 'Hoy') }})</h2>
+        
+        {% if turnos_hoy %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>DNI</th>
+                        <th>Especialidad</th>
+                        <th>Especialista</th>
+                        <th>Estado</th>
+                        <th>Pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for turno in turnos_hoy %}
+                    <tr class="turno-row {{ 'realizado' if turno.estado.value == 'realizado' else '' }}">
+                        <td><strong>{{ turno.hora.strftime('%H:%M') }}</strong></td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.nombre }} {{ turno.familiar.apellido }}
+                            {% else %}
+                                {{ turno.paciente.nombre }} {{ turno.paciente.apellido }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if turno.familiar %}
+                                {{ turno.familiar.dni }}
+                            {% else %}
+                                {{ turno.paciente.dni }}
+                            {% endif %}
+                        </td>
+                        <td>{{ turno.especialidad.nombre }}</td>
+                        <td>
+                            {% if turno.especialista %}
+                                Dr/a. {{ turno.especialista.apellido }}
+                            {% else %}
+                                <span class="text-muted">Sin asignar</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ turno.estado.value }}">
+                                {{ turno.estado.value|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if turno.pago %}
+                                <span class="badge badge-{{ turno.pago.estado.value }}">
+                                    {{ turno.pago.estado.value|upper }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if turno.pago and turno.pago.estado.value == 'pendiente' %}
+                                <form method="POST" action="{{ url_for('marcar_abonado', pago_id=turno.pago.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-small btn-success" 
+                                            onclick="return confirm('¿Marcar como abonado en efectivo?')">
+                                        💵 Marcar Abonado
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('buscar_paciente') }}?dni={{ turno.paciente.dni }}" 
+                               class="btn btn-small">Ver Ficha</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p>No hay turnos programados para hoy.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

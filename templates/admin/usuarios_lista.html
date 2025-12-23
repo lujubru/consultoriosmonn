@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios Administrativos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h1>👥 Usuarios Administrativos</h1>
+        <a href="{{ url_for('admin.crear_usuario_admin') }}" class="btn btn-primary">
+            + Nuevo Usuario
+        </a>
+    </div>
+
+    <div class="card info-card">
+        <h3>ℹ️ Roles Disponibles</h3>
+        <div class="roles-info">
+            <div class="rol-item">
+                <strong>🔑 Administrador</strong>
+                <p>Acceso total al sistema. Puede gestionar especialidades, especialistas, usuarios, turnos, pagos, movimientos y configuraciones.</p>
+            </div>
+            <div class="rol-item">
+                <strong>🧾 Recepción</strong>
+                <p>Ver turnos del día, buscar pacientes por DNI, ver estado de pagos, marcar turnos como abonados y validar asistencia.</p>
+            </div>
+        </div>
+    </div>
+
+    {% if usuarios %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>DNI</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Fecha Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr class="{{ 'inactive-row' if not usuario.activo }}">
+                    <td>{{ usuario.id }}</td>
+                    <td><strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong></td>
+                    <td>{{ usuario.dni }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.telefono or '-' }}</td>
+                    <td>
+                        {% if usuario.rol.value == 'admin' %}
+                            <span class="badge badge-admin">🔑 ADMIN</span>
+                        {% else %}
+                            <span class="badge badge-recepcion">🧾 RECEPCIÓN</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if usuario.activo %}
+                            <span class="badge badge-success">ACTIVO</span>
+                        {% else %}
+                            <span class="badge badge-danger">INACTIVO</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ usuario.fecha_registro.strftime('%d/%m/%Y') if usuario.fecha_registro else '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.editar_usuario_admin', id=usuario.id) }}" 
+                           class="btn btn-small btn-secondary">Editar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No hay usuarios administrativos registrados.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.info-card {
+    background-color: #f0f9ff;
+    border-left: 4px solid var(--info);
+}
+
+.roles-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.rol-item {
+    padding: 1rem;
+    background-color: var(--bg-white);
+    border-radius: var(--radius);
+}
+
+.rol-item strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.rol-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.badge-admin {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-recepcion {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.inactive-row {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

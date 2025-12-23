@@ -64,7 +64,7 @@
                     <div class="form-group">
                         <label for="duracion_turno">Duración de cada turno (minutos) *</label>
                         <select id="duracion_turno" name="duracion_turno" class="form-control" required>
-                            {% set config = especialista.configuracion_especialista.first() if especialista else None %}
+                            {% set config = (especialista.configuracion_especialista | first) if especialista else None %}
                             <option value="15" {{ 'selected' if config and config.duracion_turno_minutos == 15 }}>15 minutos</option>
                             <option value="30" {{ 'selected' if config and config.duracion_turno_minutos == 30 or not config }}>30 minutos</option>
                             <option value="45" {{ 'selected' if config and config.duracion_turno_minutos == 45 }}>45 minutos</option>

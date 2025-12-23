@@ -41,7 +41,7 @@
 
                 <hr>
 
-                {% set config = especialista.configuracion_especialista.first() %}
+                {% set config = especialista.configuracion_especialista | first %}
                 {% if config %}
                 <div class="config-info">
                     <p><strong>Duración turnos:</strong> {{ config.duracion_turno_minutos }} min</p>

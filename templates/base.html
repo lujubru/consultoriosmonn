@@ -32,8 +32,11 @@
                         <li><a href="{{ url_for('dashboard_admin') }}">Dashboard</a></li>
                         <li><a href="{{ url_for('buscar_paciente') }}">Buscar Paciente</a></li>
                         <li><a href="{{ url_for('revisar_pagos') }}">Pagos</a></li>
+                        <li><a href="{{ url_for('admin.listar_especialidades') }}">Especialidades</a></li>
+                        <li><a href="{{ url_for('admin.listar_especialistas') }}">Especialistas</a></li>
                         {% if session.get('user_rol') == 'admin' %}
                             <li><a href="{{ url_for('ver_movimientos') }}">Movimientos</a></li>
+                            <li><a href="{{ url_for('admin.listar_usuarios_admin') }}">Usuarios Admin</a></li>
                         {% endif %}
                     {% endif %}
                     

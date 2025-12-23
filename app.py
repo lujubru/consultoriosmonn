@@ -10,11 +10,15 @@ from config import Config
 from models import (db, Usuario, GrupoFamiliar, Especialidad, Turno, Pago, 
                    Movimiento, HorarioDisponible, RolUsuario, EstadoTurno, 
                    EstadoPago, TipoMovimiento)
+from admin_routes import admin_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
+
+# Registrar Blueprint de administración
+app.register_blueprint(admin_bp)
 
 # ==================== DECORADORES ====================
 

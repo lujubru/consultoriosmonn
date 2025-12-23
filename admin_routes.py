@@ -23,7 +23,6 @@ def listar_especialidades():
     especialidades = Especialidad.query.order_by(Especialidad.nombre).all()
     return render_template('admin/especialidades_lista.html', especialidades=especialidades)
 
-
 @admin_bp.route('/especialidades/crear', methods=['GET', 'POST'])
 @permission_required('especialidades:crear')
 def crear_especialidad():
@@ -32,42 +31,77 @@ def crear_especialidad():
         try:
             nombre = request.form.get('nombre')
             descripcion = request.form.get('descripcion')
+            direccion = request.form.get('direccion')  # <--- CAPTURAR DIRECCIÓN
             costo_consulta = float(request.form.get('costo_consulta'))
-            duracion_turno = int(request.form.get('duracion_turno', 30))
-            activo = request.form.get('activo') == 'on'
+            duracion_turno = int(request.form.get('duracion_turno'))
+            activo = 'activo' in request.form
             
-            # Validar que no exista
-            if Especialidad.query.filter_by(nombre=nombre).first():
-                flash('Ya existe una especialidad con ese nombre', 'danger')
-                return redirect(request.url)
-            
-            especialidad = Especialidad(
+            nueva = Especialidad(
                 nombre=nombre,
                 descripcion=descripcion,
+                direccion=direccion,        # <--- GUARDAR DIRECCIÓN
                 costo_consulta=costo_consulta,
                 duracion_turno=duracion_turno,
                 activo=activo
             )
             
-            db.session.add(especialidad)
+            db.session.add(nueva)
             db.session.commit()
             
-            # Log de auditoría
-            log_admin_action(
-                accion='CREAR_ESPECIALIDAD',
-                tabla='especialidades',
-                registro_id=especialidad.id,
-                datos_nuevos={'nombre': nombre, 'costo': costo_consulta}
-            )
-            
-            flash(f'Especialidad "{nombre}" creada exitosamente', 'success')
+            log_admin_action('especialidades:crear', f"Creó especialidad: {nombre}")
+            flash('Especialidad creada con éxito', 'success')
             return redirect(url_for('admin.listar_especialidades'))
             
         except Exception as e:
             db.session.rollback()
             flash(f'Error al crear especialidad: {str(e)}', 'danger')
-    
+            
     return render_template('admin/especialidad_form.html', especialidad=None)
+
+# @admin_bp.route('/especialidades/crear', methods=['GET', 'POST'])
+# @permission_required('especialidades:crear')
+# def crear_especialidad():
+#     """Crear nueva especialidad"""
+#     if request.method == 'POST':
+#         try:
+#             nombre = request.form.get('nombre')
+#             descripcion = request.form.get('descripcion')
+#             costo_consulta = float(request.form.get('costo_consulta'))
+#             duracion_turno = int(request.form.get('duracion_turno', 30))
+#             activo = request.form.get('activo') == 'on'
+            
+#             # Validar que no exista
+#             if Especialidad.query.filter_by(nombre=nombre).first():
+#                 flash('Ya existe una especialidad con ese nombre', 'danger')
+#                 return redirect(request.url)
+            
+#             especialidad = Especialidad(
+#                 nombre=nombre,
+#                 descripcion=descripcion,
+#                 costo_consulta=costo_consulta,
+#                 duracion_turno=duracion_turno,
+#                 activo=activo
+#             )
+            
+#             db.session.add(especialidad)
+#             db.session.commit()
+            
+#             # Log de auditoría
+#             log_admin_action(
+#                 accion='CREAR_ESPECIALIDAD',
+#                 tabla='especialidades',
+#                 registro_id=especialidad.id,
+#                 datos_nuevos={'nombre': nombre, 'costo': costo_consulta}
+#             )
+            
+#             flash(f'Especialidad "{nombre}" creada exitosamente', 'success')
+#             return redirect(url_for('admin.listar_especialidades'))
+            
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f'Error al crear especialidad: {str(e)}', 'danger')
+    
+#     return render_template('admin/especialidad_form.html', especialidad=None)
 
 
 @admin_bp.route('/especialidades/editar/<int:id>', methods=['GET', 'POST'])
@@ -78,42 +112,69 @@ def editar_especialidad(id):
     
     if request.method == 'POST':
         try:
-            # Guardar datos anteriores para auditoría
-            datos_anteriores = {
-                'nombre': especialidad.nombre,
-                'costo_consulta': float(especialidad.costo_consulta),
-                'activo': especialidad.activo
-            }
-            
             especialidad.nombre = request.form.get('nombre')
             especialidad.descripcion = request.form.get('descripcion')
+            especialidad.direccion = request.form.get('direccion') # <--- ACTUALIZAR DIRECCIÓN
             especialidad.costo_consulta = float(request.form.get('costo_consulta'))
-            especialidad.duracion_turno = int(request.form.get('duracion_turno', 30))
-            especialidad.activo = request.form.get('activo') == 'on'
+            especialidad.duracion_turno = int(request.form.get('duracion_turno'))
+            especialidad.activo = 'activo' in request.form
             
             db.session.commit()
             
-            # Log de auditoría
-            log_admin_action(
-                accion='MODIFICAR_ESPECIALIDAD',
-                tabla='especialidades',
-                registro_id=especialidad.id,
-                datos_anteriores=datos_anteriores,
-                datos_nuevos={
-                    'nombre': especialidad.nombre,
-                    'costo_consulta': float(especialidad.costo_consulta),
-                    'activo': especialidad.activo
-                }
-            )
-            
-            flash('Especialidad actualizada correctamente', 'success')
+            log_admin_action('especialidades:editar', f"Editó especialidad ID {id}: {especialidad.nombre}")
+            flash('Especialidad actualizada con éxito', 'success')
             return redirect(url_for('admin.listar_especialidades'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al actualizar: {str(e)}', 'danger')
-    
+            flash(f'Error al actualizar especialidad: {str(e)}', 'danger')
+            
     return render_template('admin/especialidad_form.html', especialidad=especialidad)
+
+# @admin_bp.route('/especialidades/editar/<int:id>', methods=['GET', 'POST'])
+# @permission_required('especialidades:editar')
+# def editar_especialidad(id):
+#     """Editar especialidad existente"""
+#     especialidad = Especialidad.query.get_or_404(id)
+    
+#     if request.method == 'POST':
+#         try:
+#             # Guardar datos anteriores para auditoría
+#             datos_anteriores = {
+#                 'nombre': especialidad.nombre,
+#                 'costo_consulta': float(especialidad.costo_consulta),
+#                 'activo': especialidad.activo
+#             }
+            
+#             especialidad.nombre = request.form.get('nombre')
+#             especialidad.descripcion = request.form.get('descripcion')
+#             especialidad.costo_consulta = float(request.form.get('costo_consulta'))
+#             especialidad.duracion_turno = int(request.form.get('duracion_turno', 30))
+#             especialidad.activo = request.form.get('activo') == 'on'
+            
+#             db.session.commit()
+            
+#             # Log de auditoría
+#             log_admin_action(
+#                 accion='MODIFICAR_ESPECIALIDAD',
+#                 tabla='especialidades',
+#                 registro_id=especialidad.id,
+#                 datos_anteriores=datos_anteriores,
+#                 datos_nuevos={
+#                     'nombre': especialidad.nombre,
+#                     'costo_consulta': float(especialidad.costo_consulta),
+#                     'activo': especialidad.activo
+#                 }
+#             )
+            
+#             flash('Especialidad actualizada correctamente', 'success')
+#             return redirect(url_for('admin.listar_especialidades'))
+            
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f'Error al actualizar: {str(e)}', 'danger')
+    
+#     return render_template('admin/especialidad_form.html', especialidad=especialidad)
 
 
 @admin_bp.route('/especialidades/eliminar/<int:id>', methods=['POST'])

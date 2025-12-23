@@ -73,6 +73,16 @@
         border-left: 5px solid #3182ce;
         margin-bottom: 20px;
     }
+
+    /* Estilo para el cuadro de dirección */
+    .direccion-info-box {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e3f2fd;
+        border-left: 5px solid #2196f3;
+        border-radius: 4px;
+        display: none; /* Se muestra por JS */
+    }
 </style>
 {% endblock %}
 
@@ -110,7 +120,9 @@
                 <div class="especialidades-grid">
                     {% for esp in especialidades %}
                     <label class="especialidad-card">
-                        <input type="radio" name="especialidad_id" value="{{ esp.id }}" onchange="cargarEspecialistas()">
+                        <input type="radio" name="especialidad_id" value="{{ esp.id }}" 
+                               data-direccion="{{ esp.direccion if esp.direccion else 'Dirección a confirmar' }}"
+                               onchange="cargarEspecialistas()">
                         <div class="card-content">
                             <h3>{{ esp.nombre }}</h3>
                             <p class="costo">${{ "%.2f"|format(esp.costo_consulta) }}</p>
@@ -118,6 +130,14 @@
                     </label>
                     {% endfor %}
                 </div>
+
+                <div id="direccionContenedor" class="direccion-info-box">
+                    <p style="margin: 0; color: #0d47a1;">
+                        <i class="fas fa-map-marker-alt"></i> 
+                        <strong>Ubicación:</strong> Te vas a atender en el consultorio de <span id="direccionTexto"></span>
+                    </p>
+                </div>
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Anterior</button>
                     <button type="button" class="btn btn-primary" onclick="validarYPasar(2, 3)">Siguiente</button>
@@ -203,8 +223,17 @@ function validarYPasar(actual, siguiente) {
 }
 
 async function cargarEspecialistas() {
-    const espId = document.querySelector('input[name="especialidad_id"]:checked')?.value;
+    const radioSelected = document.querySelector('input[name="especialidad_id"]:checked');
+    const espId = radioSelected?.value;
+    const direccion = radioSelected?.getAttribute('data-direccion'); // Captura la dirección
+
     if (!espId) return;
+
+    // Mostrar el cuadro de dirección inmediatamente
+    const contenedorDireccion = document.getElementById('direccionContenedor');
+    const textoDireccion = document.getElementById('direccionTexto');
+    textoDireccion.textContent = direccion;
+    contenedorDireccion.style.display = 'block';
 
     const grid = document.getElementById('especialistasGrid');
     const loader = document.getElementById('loadingEspecialistas');
@@ -239,7 +268,6 @@ async function cargarEspecialistas() {
 
 function seleccionarMedico(id) {
     document.getElementById('especialista_id_input').value = id;
-    // Si ya había una fecha puesta, recargar horarios para el nuevo médico
     if (document.getElementById('fecha').value) {
         cargarHorarios();
     }
@@ -250,7 +278,6 @@ async function cargarHorarios() {
     const especialistaId = document.getElementById('especialista_id_input').value;
     const fecha = document.getElementById('fecha').value;
     
-    // CORREGIDO: se eliminó el typo 'especislistaId'
     if (!especialidadId || !especialistaId || !fecha) return;
 
     const container = document.getElementById('horariosContainer');
@@ -293,7 +320,10 @@ async function cargarHorarios() {
 }
 
 function actualizarResumen() {
-    const especialidad = document.querySelector('input[name="especialidad_id"]:checked')?.closest('.especialidad-card').querySelector('h3').textContent;
+    const radioEspecialidad = document.querySelector('input[name="especialidad_id"]:checked');
+    const especialidad = radioEspecialidad?.closest('.especialidad-card').querySelector('h3').textContent;
+    const direccion = radioEspecialidad?.getAttribute('data-direccion'); // Dirección para el resumen
+    
     const especialista = document.querySelector('input[name="esp_radio"]:checked')?.nextElementSibling.querySelector('strong').textContent;
     const fecha = document.getElementById('fecha').value;
     const hora = document.getElementById('hora').value;
@@ -303,6 +333,7 @@ function actualizarResumen() {
         <div class="resumen-card">
             <p><strong>Paciente:</strong> ${paciente}</p>
             <p><strong>Especialidad:</strong> ${especialidad}</p>
+            <p><strong>📍 Dirección:</strong> ${direccion}</p>
             <p><strong>Profesional:</strong> ${especialista}</p>
             <p><strong>Cita:</strong> ${fecha} a las ${hora} hs</p>
         </div>

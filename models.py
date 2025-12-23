@@ -82,8 +82,9 @@ class Especialidad(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False, unique=True)
     descripcion = db.Column(db.Text)
+    direccion = db.Column(db.String(255))  # <--- AGREGAR ESTA LÍNEA
     costo_consulta = db.Column(db.Numeric(10, 2), nullable=False)
-    duracion_turno = db.Column(db.Integer, default=30)  # minutos
+    duracion_turno = db.Column(db.Integer, default=30)
     activo = db.Column(db.Boolean, default=True)
     
     turnos = db.relationship('Turno', backref='especialidad', lazy=True)

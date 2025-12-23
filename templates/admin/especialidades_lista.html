@@ -17,7 +17,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Descripción</th>
+                    <th>📍 Dirección / Consultorio</th>
                     <th>Costo Base</th>
                     <th>Duración Turno</th>
                     <th>Estado</th>
@@ -29,8 +29,15 @@
                 {% for esp in especialidades %}
                 <tr class="{{ 'inactive-row' if not esp.activo }}">
                     <td>{{ esp.id }}</td>
-                    <td><strong>{{ esp.nombre }}</strong></td>
-                    <td>{{ esp.descripcion or '-' }}</td>
+                    <td>
+                        <strong>{{ esp.nombre }}</strong><br>
+                        <small class="text-muted">{{ esp.descripcion or '' }}</small>
+                    </td>
+                    <td>
+                        <span class="address-text">
+                            {{ esp.direccion if esp.direccion else 'No asignada' }}
+                        </span>
+                    </td>
                     <td>${{ "%.2f"|format(esp.costo_consulta) }}</td>
                     <td>{{ esp.duracion_turno }} min</td>
                     <td>
@@ -41,19 +48,21 @@
                         {% endif %}
                     </td>
                     <td>
-                        {{ esp.especialistas_asignados|length }} especialista(s)
+                        {{ esp.especialistas_asignados|length if esp.especialistas_asignados else 0 }} especialista(s)
                     </td>
                     <td>
-                        <a href="{{ url_for('admin.editar_especialidad', id=esp.id) }}" 
-                           class="btn btn-small btn-secondary">Editar</a>
-                        
-                        {% if esp.activo %}
-                        <form method="POST" action="{{ url_for('admin.eliminar_especialidad', id=esp.id) }}" 
-                              style="display: inline;"
-                              onsubmit="return confirm('¿Desactivar esta especialidad?')">
-                            <button type="submit" class="btn btn-small btn-danger">Desactivar</button>
-                        </form>
-                        {% endif %}
+                        <div class="btn-group">
+                            <a href="{{ url_for('admin.editar_especialidad', id=esp.id) }}" 
+                               class="btn btn-small btn-secondary">Editar</a>
+                            
+                            {% if esp.activo %}
+                            <form method="POST" action="{{ url_for('admin.eliminar_especialidad', id=esp.id) }}" 
+                                  style="display: inline;"
+                                  onsubmit="return confirm('¿Desactivar esta especialidad?')">
+                                <button type="submit" class="btn btn-small btn-danger">Desactivar</button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -66,6 +75,17 @@
 .inactive-row {
     opacity: 0.6;
     background-color: #f8f9fa;
+}
+.btn-group {
+    display: flex;
+    gap: 5px;
+}
+.address-text {
+    font-weight: 500;
+    color: #2c3e50;
+}
+.text-muted {
+    font-size: 0.85em;
 }
 </style>
 {% endblock %}

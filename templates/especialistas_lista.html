@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Especialistas{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h1>👨‍⚕️ Gestión de Especialistas</h1>
+        <a href="{{ url_for('admin.crear_especialista') }}" class="btn btn-primary">
+            + Nuevo Especialista
+        </a>
+    </div>
+
+    <div class="grid">
+        {% for especialista in especialistas %}
+        <div class="card especialista-card">
+            <div class="card-header">
+                <h3>Dr/a. {{ especialista.nombre }} {{ especialista.apellido }}</h3>
+                <span class="badge {{ 'badge-success' if especialista.activo else 'badge-danger' }}">
+                    {{ 'ACTIVO' if especialista.activo else 'INACTIVO' }}
+                </span>
+            </div>
+
+            <div class="card-body">
+                <p><strong>DNI:</strong> {{ especialista.dni }}</p>
+                <p><strong>Email:</strong> {{ especialista.email }}</p>
+                <p><strong>Teléfono:</strong> {{ especialista.telefono or '-' }}</p>
+
+                <hr>
+
+                <h4>Especialidades</h4>
+                {% if especialista.especialidades_asignadas %}
+                    <ul class="especialidades-list">
+                        {% for asignacion in especialista.especialidades_asignadas %}
+                        <li>{{ asignacion.especialidad.nombre }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Sin especialidades asignadas</p>
+                {% endif %}
+
+                <hr>
+
+                {% set config = especialista.configuracion_especialista.first() %}
+                {% if config %}
+                <div class="config-info">
+                    <p><strong>Duración turnos:</strong> {{ config.duracion_turno_minutos }} min</p>
+                    <p><strong>Cupo máximo diario:</strong> {{ config.pacientes_maximos_dia }} pacientes</p>
+                    {% if config.tiempo_buffer_minutos > 0 %}
+                    <p><strong>Buffer:</strong> {{ config.tiempo_buffer_minutos }} min</p>
+                    {% endif %}
+                    {% if config.permite_sobreturnos %}
+                    <p><strong>Sobreturnos:</strong> Hasta {{ config.sobreturnos_maximos }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card-footer">
+                <a href="{{ url_for('admin.configurar_horarios', especialista_id=especialista.id) }}" 
+                   class="btn btn-primary btn-small">
+                    📅 Configurar Horarios
+                </a>
+                <a href="{{ url_for('admin.editar_especialista', id=especialista.id) }}" 
+                   class="btn btn-secondary btn-small">
+                    ✏️ Editar
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.especialista-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.especialidades-list {
+    list-style: none;
+    padding: 0;
+}
+
+.especialidades-list li {
+    padding: 0.25rem 0.5rem;
+    background-color: var(--bg-light);
+    margin-bottom: 0.25rem;
+    border-radius: 4px;
+}
+
+.config-info {
+    font-size: 0.9rem;
+    background-color: var(--bg-light);
+    padding: 0.75rem;
+    border-radius: 4px;
+}
+
+.config-info p {
+    margin-bottom: 0.25rem;
+}
+
+.card-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.5rem;
+}
+</style>
+{% endblock %}

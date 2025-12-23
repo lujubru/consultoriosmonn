@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Especialidades{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h1>⚕️ Gestión de Especialidades</h1>
+        <a href="{{ url_for('admin.crear_especialidad') }}" class="btn btn-primary">
+            + Nueva Especialidad
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Costo Base</th>
+                    <th>Duración Turno</th>
+                    <th>Estado</th>
+                    <th>Especialistas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for esp in especialidades %}
+                <tr class="{{ 'inactive-row' if not esp.activo }}">
+                    <td>{{ esp.id }}</td>
+                    <td><strong>{{ esp.nombre }}</strong></td>
+                    <td>{{ esp.descripcion or '-' }}</td>
+                    <td>${{ "%.2f"|format(esp.costo_consulta) }}</td>
+                    <td>{{ esp.duracion_turno }} min</td>
+                    <td>
+                        {% if esp.activo %}
+                            <span class="badge badge-success">ACTIVA</span>
+                        {% else %}
+                            <span class="badge badge-danger">INACTIVA</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ esp.especialistas_asignados|length }} especialista(s)
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.editar_especialidad', id=esp.id) }}" 
+                           class="btn btn-small btn-secondary">Editar</a>
+                        
+                        {% if esp.activo %}
+                        <form method="POST" action="{{ url_for('admin.eliminar_especialidad', id=esp.id) }}" 
+                              style="display: inline;"
+                              onsubmit="return confirm('¿Desactivar esta especialidad?')">
+                            <button type="submit" class="btn btn-small btn-danger">Desactivar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.inactive-row {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

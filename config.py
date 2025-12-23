@@ -29,5 +29,4 @@ class Config:
     
     # Costos
     COSTO_BASE_CONSULTA = 15000  # Pesos
-
     DESCUENTO_GRUPO_FAMILIAR = 0.15  # 15% descuento por integrante adicional

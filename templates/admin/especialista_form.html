@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if especialista else 'Nuevo' }} Especialista{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h1>{{ 'Editar' if especialista else 'Nuevo' }} Especialista</h1>
+
+        <form method="POST">
+            <!-- Datos Personales -->
+            <fieldset>
+                <legend>Datos Personales</legend>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre *</label>
+                        <input type="text" id="nombre" name="nombre" class="form-control"
+                               value="{{ especialista.nombre if especialista else '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="apellido">Apellido *</label>
+                        <input type="text" id="apellido" name="apellido" class="form-control"
+                               value="{{ especialista.apellido if especialista else '' }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dni">DNI *</label>
+                        <input type="text" id="dni" name="dni" class="form-control"
+                               value="{{ especialista.dni if especialista else '' }}"
+                               {{ 'readonly' if especialista }} required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="tel" id="telefono" name="telefono" class="form-control"
+                               value="{{ especialista.telefono if especialista else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" class="form-control"
+                           value="{{ especialista.email if especialista else '' }}" required>
+                </div>
+
+                {% if not especialista %}
+                <div class="form-group">
+                    <label for="password">Contraseña *</label>
+                    <input type="password" id="password" name="password" 
+                           class="form-control" minlength="6" required>
+                </div>
+                {% endif %}
+            </fieldset>
+
+            <!-- Configuración de Turnos -->
+            <fieldset>
+                <legend>Configuración de Turnos</legend>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duracion_turno">Duración de cada turno (minutos) *</label>
+                        <select id="duracion_turno" name="duracion_turno" class="form-control" required>
+                            {% set config = especialista.configuracion_especialista.first() if especialista else None %}
+                            <option value="15" {{ 'selected' if config and config.duracion_turno_minutos == 15 }}>15 minutos</option>
+                            <option value="30" {{ 'selected' if config and config.duracion_turno_minutos == 30 or not config }}>30 minutos</option>
+                            <option value="45" {{ 'selected' if config and config.duracion_turno_minutos == 45 }}>45 minutos</option>
+                            <option value="60" {{ 'selected' if config and config.duracion_turno_minutos == 60 }}>60 minutos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pacientes_maximos_dia">Cupo máximo por día *</label>
+                        <input type="number" id="pacientes_maximos_dia" name="pacientes_maximos_dia"
+                               class="form-control" min="1" max="100"
+                               value="{{ config.pacientes_maximos_dia if config else '20' }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tiempo_buffer">Tiempo de buffer entre turnos (minutos)</label>
+                    <input type="number" id="tiempo_buffer" name="tiempo_buffer"
+                           class="form-control" min="0" max="30"
+                           value="{{ config.tiempo_buffer_minutos if config else '0' }}">
+                    <small class="form-text">Tiempo de descanso entre pacientes</small>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="permite_sobreturnos" id="permite_sobreturnos"
+                               {{ 'checked' if config and config.permite_sobreturnos }}
+                               onchange="toggleSobreturnos()">
+                        Permitir sobreturnos excepcionales
+                    </label>
+                </div>
+
+                <div class="form-group" id="sobreturnos_config" 
+                     style="display: {{ 'block' if config and config.permite_sobreturnos else 'none' }}">
+                    <label for="sobreturnos_maximos">Cantidad máxima de sobreturnos</label>
+                    <input type="number" id="sobreturnos_maximos" name="sobreturnos_maximos"
+                           class="form-control" min="0" max="10"
+                           value="{{ config.sobreturnos_maximos if config else '0' }}">
+                </div>
+            </fieldset>
+
+            <!-- Especialidades -->
+            <fieldset>
+                <legend>Especialidades</legend>
+                <p class="info-text">Seleccioná las especialidades que atiende este profesional:</p>
+
+                <div class="especialidades-checkbox-group">
+                    {% for esp in especialidades %}
+                    <label class="checkbox-card">
+                        <input type="checkbox" name="especialidades[]" value="{{ esp.id }}"
+                               {{ 'checked' if especialista and esp.id in especialidades_asignadas }}>
+                        <div class="checkbox-content">
+                            <strong>{{ esp.nombre }}</strong>
+                            <small>Costo base: ${{ "%.2f"|format(esp.costo_consulta) }}</small>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large">
+                    {{ 'Actualizar' if especialista else 'Crear' }} Especialista
+                </button>
+                <a href="{{ url_for('admin.listar_especialistas') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleSobreturnos() {
+    const checkbox = document.getElementById('permite_sobreturnos');
+    const config = document.getElementById('sobreturnos_config');
+    config.style.display = checkbox.checked ? 'block' : 'none';
+}
+</script>
+
+<style>
+.especialidades-checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.checkbox-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.checkbox-card:hover {
+    border-color: var(--primary);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.checkbox-card input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
+
+.checkbox-card input[type="checkbox"]:checked + .checkbox-content {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.checkbox-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.checkbox-content small {
+    color: var(--text-muted);
+}
+</style>
+{% endblock %}

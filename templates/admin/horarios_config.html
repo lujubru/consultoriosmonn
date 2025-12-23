@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Configurar Horarios - Dr/a. {{ especialista.apellido }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="section-header">
+        <h1>📅 Configurar Horarios de Atención</h1>
+        <a href="{{ url_for('admin.listar_especialistas') }}" class="btn btn-secondary">
+            ← Volver a Especialistas
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>Dr/a. {{ especialista.nombre }} {{ especialista.apellido }}</h2>
+        <p>DNI: {{ especialista.dni }} | Email: {{ especialista.email }}</p>
+    </div>
+
+    <!-- Horarios Actuales -->
+    <section class="section">
+        <h2>Horarios de Atención</h2>
+
+        {% set dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+
+        <div class="horarios-grid">
+            {% for i in range(7) %}
+            <div class="dia-card">
+                <h3>{{ dias[i] }}</h3>
+
+                {% if i in horarios_por_dia %}
+                    {% for horario in horarios_por_dia[i] %}
+                    <div class="horario-item">
+                        <div class="horario-info">
+                            <strong>{{ horario.especialidad.nombre }}</strong>
+                            <p>{{ horario.hora_inicio.strftime('%H:%M') }} - {{ horario.hora_fin.strftime('%H:%M') }}</p>
+                            {% if horario.duracion_turno_custom %}
+                            <small>Turnos de {{ horario.duracion_turno_custom }} min</small>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('admin.eliminar_horario', id=horario.id) }}"
+                              style="display: inline;"
+                              onsubmit="return confirm('¿Eliminar este horario?')">
+                            <button type="submit" class="btn btn-small btn-danger">✗</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No atiende</p>
+                {% endif %}
+
+                <button type="button" class="btn btn-small btn-primary" 
+                        onclick="mostrarFormAgregar({{ i }})">
+                    + Agregar horario
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Formulario para Agregar Horario (Modal) -->
+    <div id="modalAgregarHorario" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Agregar Horario de Atención</h3>
+
+            <form method="POST" action="{{ url_for('admin.agregar_horario') }}">
+                <input type="hidden" name="especialista_id" value="{{ especialista.id }}">
+                <input type="hidden" name="dia_semana" id="dia_semana_input">
+
+                <div class="form-group">
+                    <label>Día</label>
+                    <input type="text" id="dia_nombre" class="form-control" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="especialidad_id">Especialidad *</label>
+                    <select id="especialidad_id" name="especialidad_id" class="form-control" required>
+                        {% for asignacion in especialidades %}
+                        <option value="{{ asignacion.especialidad_id }}">
+                            {{ asignacion.especialidad.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hora_inicio">Hora inicio *</label>
+                        <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hora_fin">Hora fin *</label>
+                        <input type="time" id="hora_fin" name="hora_fin" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracion_turno_custom">Duración de turno (opcional)</label>
+                    <select id="duracion_turno_custom" name="duracion_turno_custom" class="form-control">
+                        <option value="">Usar configuración general</option>
+                        <option value="15">15 minutos</option>
+                        <option value="30">30 minutos</option>
+                        <option value="45">45 minutos</option>
+                        <option value="60">60 minutos</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bloqueos -->
+    <section class="section">
+        <div class="section-header">
+            <h2>🚫 Bloqueos de Horarios (Vacaciones/Ausencias)</h2>
+            <button type="button" class="btn btn-warning" onclick="mostrarFormBloqueo()">
+                + Nuevo Bloqueo
+            </button>
+        </div>
+
+        {% if bloqueos %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Desde</th>
+                        <th>Hasta</th>
+                        <th>Horario</th>
+                        <th>Motivo</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bloqueo in bloqueos %}
+                    <tr>
+                        <td>{{ bloqueo.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ bloqueo.fecha_fin.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if bloqueo.hora_inicio %}
+                                {{ bloqueo.hora_inicio.strftime('%H:%M') }} - {{ bloqueo.hora_fin.strftime('%H:%M') }}
+                            {% else %}
+                                <span class="badge badge-warning">DÍA COMPLETO</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ bloqueo.motivo }}</td>
+                        <td>{{ bloqueo.observaciones or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No hay bloqueos programados</p>
+        {% endif %}
+    </section>
+
+    <!-- Modal Bloqueo -->
+    <div id="modalBloqueo" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Crear Bloqueo de Horario</h3>
+
+            <form method="POST" action="{{ url_for('admin.crear_bloqueo') }}">
+                <input type="hidden" name="especialista_id" value="{{ especialista.id }}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_inicio">Fecha inicio *</label>
+                        <input type="date" id="fecha_inicio_bloqueo" name="fecha_inicio" 
+                               class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_fin">Fecha fin *</label>
+                        <input type="date" id="fecha_fin_bloqueo" name="fecha_fin" 
+                               class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="bloqueo_parcial" onchange="toggleBloqueoHorario()">
+                        Bloquear solo un horario específico (dejar sin marcar para bloquear días completos)
+                    </label>
+                </div>
+
+                <div id="horario_bloqueo" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hora_inicio_bloqueo">Hora inicio</label>
+                            <input type="time" id="hora_inicio_bloqueo" name="hora_inicio" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hora_fin_bloqueo">Hora fin</label>
+                            <input type="time" id="hora_fin_bloqueo" name="hora_fin" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="motivo">Motivo *</label>
+                    <input type="text" id="motivo" name="motivo" class="form-control" 
+                           placeholder="Ej: Vacaciones, Congreso médico, etc." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="observaciones_bloqueo">Observaciones</label>
+                    <textarea id="observaciones_bloqueo" name="observaciones" 
+                              class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-warning">Crear Bloqueo</button>
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalBloqueo()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+function mostrarFormAgregar(diaSemana) {
+    document.getElementById('dia_semana_input').value = diaSemana;
+    document.getElementById('dia_nombre').value = dias[diaSemana];
+    document.getElementById('modalAgregarHorario').style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modalAgregarHorario').style.display = 'none';
+}
+
+function mostrarFormBloqueo() {
+    document.getElementById('modalBloqueo').style.display = 'flex';
+}
+
+function cerrarModalBloqueo() {
+    document.getElementById('modalBloqueo').style.display = 'none';
+}
+
+function toggleBloqueoHorario() {
+    const checkbox = document.getElementById('bloqueo_parcial');
+    const horario = document.getElementById('horario_bloqueo');
+    horario.style.display = checkbox.checked ? 'block' : 'none';
+}
+
+// Cerrar modal al hacer click fuera
+window.onclick = function(event) {
+    const modal1 = document.getElementById('modalAgregarHorario');
+    const modal2 = document.getElementById('modalBloqueo');
+    if (event.target == modal1) {
+        modal1.style.display = 'none';
+    }
+    if (event.target == modal2) {
+        modal2.style.display = 'none';
+    }
+}
+</script>
+
+<style>
+.horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.dia-card {
+    background-color: var(--bg-white);
+    padding: 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.dia-card h3 {
+    margin-bottom: 1rem;
+    color: var(--primary);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.horario-item {
+    background-color: var(--bg-light);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.horario-info {
+    flex: 1;
+}
+
+.horario-info strong {
+    display: block

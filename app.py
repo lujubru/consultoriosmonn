@@ -6,12 +6,14 @@ import gzip
 import io
 import os
 
+
 from config import Config
 from models import (db, Usuario, GrupoFamiliar, Especialidad, Turno, Pago, 
                    Movimiento, HorarioDisponible, RolUsuario, EstadoTurno, 
                    EstadoPago, TipoMovimiento)
 from admin_routes import admin_bp
-
+from models_admin import EspecialistaEspecialidad
+from turno_generator import GeneradorTurnos
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -253,124 +255,166 @@ def dashboard_user():
                          grupo_familiar=grupo_familiar)
 
 # ==================== TURNOS ====================
-
 @app.route('/turnos/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo_turno():
     if request.method == 'POST':
+        # 1. Capturamos los datos del formulario (incluyendo el nuevo especialista_id)
+        especialidad_id = request.form.get('especialidad_id')
+        especialista_id = request.form.get('especialista_id')  # <--- AGREGAR ESTA LÍNEA
+        familiar_id = request.form.get('familiar_id')
+        fecha_str = request.form.get('fecha')
+        hora = request.form.get('hora')
+        motivo_consulta = request.form.get('motivo_consulta')
+
         try:
-            paciente_id = session['user_id']
-            especialidad_id = request.form.get('especialidad_id')
-            fecha_str = request.form.get('fecha')
-            hora_str = request.form.get('hora')
-            familiar_id = request.form.get('familiar_id')  # Opcional
-            motivo = request.form.get('motivo_consulta')
-            
-            # Convertir fecha y hora
-            fecha_turno = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-            hora_turno = datetime.strptime(hora_str, '%H:%M').time()
-            
-            # Validar que no exista turno en ese horario
-            turno_existente = Turno.query.filter_by(
-                especialidad_id=especialidad_id,
-                fecha=fecha_turno,
-                hora=hora_turno,
-                estado=EstadoTurno.PENDIENTE
-            ).first()
-            
-            if turno_existente:
-                flash('Ese horario ya está ocupado', 'danger')
-                return redirect(url_for('nuevo_turno'))
-            
-            # Crear turno
-            turno = Turno(
-                paciente_id=paciente_id,
-                especialidad_id=especialidad_id,
-                fecha=fecha_turno,
-                hora=hora_turno,
-                familiar_id=familiar_id if familiar_id else None,
-                motivo_consulta=motivo,
-                estado=EstadoTurno.PENDIENTE
+            # 2. Creamos la instancia del Turno
+            nuevo_turno = Turno(
+                paciente_id=session['user_id'],
+                especialista_id=int(especialista_id), # <--- ASIGNAR EL ID AQUÍ
+                especialidad_id=int(especialidad_id),
+                familiar_id=int(familiar_id) if familiar_id else None,
+                fecha=datetime.strptime(fecha_str, '%Y-%m-%d').date(),
+                hora=hora,
+                motivo_consulta=motivo_consulta,
+                estado=EstadoTurno.PENDIENTE # O el estado inicial que uses
             )
-            
-            db.session.add(turno)
-            db.session.flush()
-            
-            # Crear pago asociado
-            especialidad = Especialidad.query.get(especialidad_id)
-            usuario = Usuario.query.get(paciente_id)
-            
-            # Calcular costo con descuento por grupo familiar
-            costo = calcular_costo_grupo_familiar(paciente_id)
-            
-            pago = Pago(
-                turno_id=turno.id,
-                monto=costo,
-                estado=EstadoPago.PENDIENTE
-            )
-            
-            db.session.add(pago)
+
+            db.session.add(nuevo_turno)
             db.session.commit()
             
-            flash('Turno solicitado correctamente. Debe abonar para confirmar.', 'success')
+            flash('¡Turno agendado con éxito!', 'success')
             return redirect(url_for('mis_turnos'))
-            
+
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al crear turno: {str(e)}', 'danger')
+            flash(f'Error al agendar el turno: {str(e)}', 'danger')
             return redirect(url_for('nuevo_turno'))
-    
-    # GET
-    especialidades = Especialidad.query.filter_by(activo=True).all()
-    grupo_familiar = GrupoFamiliar.query.filter_by(
-        usuario_id=session['user_id'],
-        activo=True
-    ).all()
-    
-    return render_template('turnos_nuevo.html',
-                         especialidades=especialidades,
-                         grupo_familiar=grupo_familiar)
 
-@app.route('/api/turnos/horarios-disponibles')
-@login_required
-def horarios_disponibles():
-    """API para obtener horarios disponibles según especialidad y fecha"""
-    especialidad_id = request.args.get('especialidad_id')
-    fecha_str = request.args.get('fecha')
+    # Si es GET, cargamos las especialidades y familiares normalmente
+    especialidades = Especialidad.query.all()
+    grupo_familiar = GrupoFamiliar.query.filter_by(usuario_id=session['user_id']).all()
+    return render_template('turnos_nuevo.html', 
+                           especialidades=especialidades, 
+                           grupo_familiar=grupo_familiar,
+                           today=date.today().isoformat())
+# @app.route('/turnos/nuevo', methods=['GET', 'POST'])
+# @login_required
+# def nuevo_turno():
+#     if request.method == 'POST':
+#         try:
+#             paciente_id = session['user_id']
+#             especialidad_id = request.form.get('especialidad_id')
+#             fecha_str = request.form.get('fecha')
+#             hora_str = request.form.get('hora')
+#             familiar_id = request.form.get('familiar_id')  # Opcional
+#             motivo = request.form.get('motivo_consulta')
+            
+#             # Convertir fecha y hora
+#             fecha_turno = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+#             hora_turno = datetime.strptime(hora_str, '%H:%M').time()
+            
+#             # Validar que no exista turno en ese horario
+#             turno_existente = Turno.query.filter_by(
+#                 especialidad_id=especialidad_id,
+#                 fecha=fecha_turno,
+#                 hora=hora_turno,
+#                 estado=EstadoTurno.PENDIENTE
+#             ).first()
+            
+#             if turno_existente:
+#                 flash('Ese horario ya está ocupado', 'danger')
+#                 return redirect(url_for('nuevo_turno'))
+            
+#             # Crear turno
+#             turno = Turno(
+#                 paciente_id=paciente_id,
+#                 especialidad_id=especialidad_id,
+#                 fecha=fecha_turno,
+#                 hora=hora_turno,
+#                 familiar_id=familiar_id if familiar_id else None,
+#                 motivo_consulta=motivo,
+#                 estado=EstadoTurno.PENDIENTE
+#             )
+            
+#             db.session.add(turno)
+#             db.session.flush()
+            
+#             # Crear pago asociado
+#             especialidad = Especialidad.query.get(especialidad_id)
+#             usuario = Usuario.query.get(paciente_id)
+            
+#             # Calcular costo con descuento por grupo familiar
+#             costo = calcular_costo_grupo_familiar(paciente_id)
+            
+#             pago = Pago(
+#                 turno_id=turno.id,
+#                 monto=costo,
+#                 estado=EstadoPago.PENDIENTE
+#             )
+            
+#             db.session.add(pago)
+#             db.session.commit()
+            
+#             flash('Turno solicitado correctamente. Debe abonar para confirmar.', 'success')
+#             return redirect(url_for('mis_turnos'))
+            
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f'Error al crear turno: {str(e)}', 'danger')
+#             return redirect(url_for('nuevo_turno'))
     
-    if not especialidad_id or not fecha_str:
-        return {'error': 'Faltan parámetros'}, 400
+#     # GET
+#     especialidades = Especialidad.query.filter_by(activo=True).all()
+#     grupo_familiar = GrupoFamiliar.query.filter_by(
+#         usuario_id=session['user_id'],
+#         activo=True
+#     ).all()
     
-    fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-    dia_semana = fecha.weekday()
+#     return render_template('turnos_nuevo.html',
+#                          especialidades=especialidades,
+#                          grupo_familiar=grupo_familiar)
+
+# @app.route('/api/turnos/horarios-disponibles')
+# @login_required
+# def horarios_disponibles():
+#     """API para obtener horarios disponibles según especialidad y fecha"""
+#     especialidad_id = request.args.get('especialidad_id')
+#     fecha_str = request.args.get('fecha')
     
-    # Obtener horarios configurados para ese día
-    especialidad = Especialidad.query.get(especialidad_id)
-    duracion = especialidad.duracion_turno
+#     if not especialidad_id or not fecha_str:
+#         return {'error': 'Faltan parámetros'}, 400
     
-    # Horarios genéricos (8:00 a 18:00, cada 30 min por defecto)
-    horarios = []
-    hora_inicio = time(8, 0)
-    hora_fin = time(18, 0)
+#     fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+#     dia_semana = fecha.weekday()
     
-    hora_actual = datetime.combine(date.today(), hora_inicio)
-    hora_final = datetime.combine(date.today(), hora_fin)
+#     # Obtener horarios configurados para ese día
+#     especialidad = Especialidad.query.get(especialidad_id)
+#     duracion = especialidad.duracion_turno
     
-    while hora_actual < hora_final:
-        horarios.append(hora_actual.time().strftime('%H:%M'))
-        hora_actual += timedelta(minutes=duracion)
+#     # Horarios genéricos (8:00 a 18:00, cada 30 min por defecto)
+#     horarios = []
+#     hora_inicio = time(8, 0)
+#     hora_fin = time(18, 0)
     
-    # Filtrar horarios ocupados
-    turnos_ocupados = Turno.query.filter(
-        Turno.especialidad_id == especialidad_id,
-        Turno.fecha == fecha,
-        Turno.estado.in_([EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO])
-    ).all()
+#     hora_actual = datetime.combine(date.today(), hora_inicio)
+#     hora_final = datetime.combine(date.today(), hora_fin)
     
-    horarios_ocupados = [t.hora.strftime('%H:%M') for t in turnos_ocupados]
-    horarios_disponibles = [h for h in horarios if h not in horarios_ocupados]
+#     while hora_actual < hora_final:
+#         horarios.append(hora_actual.time().strftime('%H:%M'))
+#         hora_actual += timedelta(minutes=duracion)
     
-    return {'horarios': horarios_disponibles}
+#     # Filtrar horarios ocupados
+#     turnos_ocupados = Turno.query.filter(
+#         Turno.especialidad_id == especialidad_id,
+#         Turno.fecha == fecha,
+#         Turno.estado.in_([EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO])
+#     ).all()
+    
+#     horarios_ocupados = [t.hora.strftime('%H:%M') for t in turnos_ocupados]
+#     horarios_disponibles = [h for h in horarios if h not in horarios_ocupados]
+    
+#     return {'horarios': horarios_disponibles}
 
 @app.route('/turnos/mis-turnos')
 @login_required
@@ -822,6 +866,57 @@ def dashboard_especialista():
     return render_template('dashboard_especialista.html',
                          turnos_hoy=turnos_hoy,
                          turnos_proximos=turnos_proximos)
+
+
+@app.route('/api/especialistas-por-especialidad')
+@login_required
+def especialistas_por_especialidad():
+    especialidad_id = request.args.get('especialidad_id')
+    if not especialidad_id:
+        return {'error': 'Faltan parámetros'}, 400
+    
+    # Buscamos especialistas vinculados a esa especialidad
+    # Unimos con la tabla Usuario para obtener los nombres
+    especialistas = db.session.query(Usuario).join(
+        EspecialistaEspecialidad, 
+        EspecialistaEspecialidad.especialista_id == Usuario.id
+    ).filter(
+        EspecialistaEspecialidad.especialidad_id == especialidad_id,
+        EspecialistaEspecialidad.activo == True
+    ).all()
+    
+    return {
+        'especialistas': [
+            {
+                'id': esp.id, 
+                'nombre': f"{esp.nombre} {esp.apellido}"
+            } for esp in especialistas
+        ]
+    }
+
+@app.route('/api/turnos/horarios-disponibles')
+@login_required
+def horarios_disponibles():
+    especialista_id = request.args.get('especialista_id')
+    especialidad_id = request.args.get('especialidad_id')
+    fecha_str = request.args.get('fecha')
+    
+    if not all([especialista_id, especialidad_id, fecha_str]):
+        return {'error': 'Faltan parámetros'}, 400
+    
+    fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    
+    # USAMOS TU GENERADOR DE TURNOS (Lógica del archivo turno_generator.py)
+    slots = GeneradorTurnos.obtener_slots_disponibles(
+        int(especialista_id), 
+        int(especialidad_id), 
+        fecha
+    )
+    
+    # Filtramos solo los que están disponibles para la API
+    horarios_finales = [s['hora_inicio'].strftime('%H:%M') for s in slots if s['disponible']]
+    
+    return {'horarios': horarios_finales}
 
 @app.route('/especialista/atender-turno/<int:turno_id>', methods=['GET', 'POST'])
 @role_required(RolUsuario.ESPECIALISTA)

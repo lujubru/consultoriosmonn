@@ -60,6 +60,11 @@
             display: block;
         }
         
+        /* Compensar altura del header fijo */
+        .main-content {
+            padding-top: 100px; /* Ajusta según la altura de tu header */
+        }
+        
         /* Estilos responsive para el menú */
         @media (max-width: 768px) {
             .hamburger {
@@ -68,6 +73,11 @@
             
             .header-nav {
                 z-index: 100002 !important;
+                min-height: 70px !important; /* Altura reducida en móvil */
+            }
+            
+            .main-content {
+                padding-top: 80px; /* Menos padding en móvil */
             }
             
             .nav-actions {
@@ -125,6 +135,13 @@
             
             .dropdown-content a {
                 padding: 12px 16px;
+            }
+        }
+        
+        /* Para pantallas grandes */
+        @media (min-width: 769px) {
+            .main-content {
+                padding-top: 100px; /* Más padding en desktop */
             }
         }
     </style>

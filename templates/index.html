@@ -1,77 +1,245 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio - Consultorio Médico{% endblock %}
+{% block title %}Inicio - Consultorios Monn{% endblock %}
 
 {% block content %}
+<!-- Hero Section -->
 <div class="hero">
     <div class="container">
-        <h1>Bienvenido a Nuestro Consultorio</h1>
+        <h1>Bienvenido a Consultorios Monn</h1>
         <p class="lead">Atención médica de calidad para toda tu familia</p>
         {% if not session.get('user_id') %}
-            <a href="{{ url_for('register') }}" class="btn btn-large">Registrarse Ahora</a>
+            <a href="{{ url_for('register') }}" class="btn btn-large btn-hero">Registrarse Ahora</a>
         {% else %}
-            <a href="{{ url_for('nuevo_turno') }}" class="btn btn-large">Solicitar Turno</a>
+            <a href="{{ url_for('nuevo_turno') }}" class="btn btn-large btn-hero">Solicitar Turno</a>
         {% endif %}
     </div>
 </div>
 
+<!-- Banner Promocional Prepaga -->
+<section class="promo-banner">
+    <div class="container">
+        <div class="promo-content">
+            <div class="promo-icon">🎉</div>
+            <div class="promo-text">
+                <h2>¡Unite a Nuestra Prepaga!</h2>
+                <p>Atendete <strong>GRATIS</strong> en nuestros consultorios con el plan que más se adapte a tu familia</p>
+            </div>
+            <a href="#prepaga" class="btn btn-promo">Ver Planes</a>
+        </div>
+    </div>
+</section>
+
 <div class="container">
     <!-- Especialidades -->
     <section class="section">
-        <h2>Nuestras Especialidades</h2>
+        <h2 class="section-title">Nuestras Especialidades</h2>
         <div class="grid">
             {% for especialidad in especialidades %}
-            <div class="card">
+            <div class="card especialidad-card-home">
+                <div class="card-icon">🏥</div>
                 <h3>{{ especialidad.nombre }}</h3>
                 <p>{{ especialidad.descripcion or 'Atención especializada' }}</p>
                 <p class="precio">${{ "%.2f"|format(especialidad.costo_consulta) }}</p>
                 {% if session.get('user_id') %}
-                    <a href="{{ url_for('nuevo_turno') }}" class="btn">Solicitar Turno</a>
+                    <a href="{{ url_for('nuevo_turno') }}" class="btn btn-small">Solicitar Turno</a>
                 {% endif %}
             </div>
             {% endfor %}
         </div>
     </section>
 
-    <!-- Beneficios Prepaga -->
-    <section class="section benefits">
-        <h2>🌟 Beneficios de Nuestra Prepaga</h2>
-        <div class="grid">
-            <div class="benefit-card">
-                <div class="icon">👨‍👩‍👧‍👦</div>
-                <h3>Descuento Familiar</h3>
-                <p>15% de descuento por cada integrante adicional de tu grupo familiar</p>
+    <!-- Planes Prepaga - NUEVO DISEÑO -->
+    <section class="section prepaga-section" id="prepaga">
+        <h2 class="section-title">🌟 Nuestra Prepaga</h2>
+        <p class="section-subtitle">Elegí el plan que mejor se adapte a tu grupo familiar y disfrutá de atención médica de calidad</p>
+        
+        <div class="planes-grid">
+            <!-- Plan Individual -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <span class="plan-icon">👤</span>
+                    <h3>Plan Individual</h3>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">$5.000</span>
+                    <span class="price-period">/mes</span>
+                </div>
+                <ul class="plan-features">
+                    <li>✓ 1 titular</li>
+                    <li>✓ Hasta 10 consultas mensuales*</li>
+                    <li>✓ Turnos online 24/7</li>
+                    <li>✓ Historial médico digital</li>
+                    <li>✓ Atención en ambos consultorios</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-plan">Elegir Plan</a>
+                <p class="plan-note">*Incluidas en el abono mensual</p>
             </div>
-            <div class="benefit-card">
-                <div class="icon">📅</div>
-                <h3>Turnos Online</h3>
-                <p>Solicita turnos 24/7 desde la comodidad de tu casa</p>
+
+            <!-- Plan Pareja -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <span class="plan-icon">👫</span>
+                    <h3>Plan Pareja</h3>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">$8.000</span>
+                    <span class="price-period">/mes</span>
+                </div>
+                <ul class="plan-features">
+                    <li>✓ Titular + 1 familiar</li>
+                    <li>✓ Hasta 10 consultas mensuales*</li>
+                    <li>✓ Turnos online 24/7</li>
+                    <li>✓ Historial médico digital</li>
+                    <li>✓ Atención en ambos consultorios</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-plan">Elegir Plan</a>
+                <p class="plan-note">*Incluidas en el abono mensual</p>
             </div>
-            <div class="benefit-card">
-                <div class="icon">💳</div>
-                <h3>Múltiples Formas de Pago</h3>
-                <p>Transferencia bancaria o efectivo en el consultorio</p>
+
+            <!-- Plan Familiar - Destacado -->
+            <div class="plan-card plan-destacado">
+                <div class="plan-badge">MÁS ELEGIDO</div>
+                <div class="plan-header">
+                    <span class="plan-icon">👨‍👩‍👧‍👦</span>
+                    <h3>Plan Familiar</h3>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">$12.000</span>
+                    <span class="price-period">/mes</span>
+                </div>
+                <ul class="plan-features">
+                    <li>✓ Titular + hasta 4 familiares</li>
+                    <li>✓ Hasta 10 consultas mensuales*</li>
+                    <li>✓ Turnos online 24/7</li>
+                    <li>✓ Historial médico digital</li>
+                    <li>✓ Atención prioritaria</li>
+                    <li>✓ Atención en ambos consultorios</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-plan btn-primary">Elegir Plan</a>
+                <p class="plan-note">*Incluidas en el abono mensual</p>
             </div>
-            <div class="benefit-card">
-                <div class="icon">📋</div>
-                <h3>Historial Digital</h3>
-                <p>Accede a tu historial médico en cualquier momento</p>
+
+            <!-- Plan Familiar Plus -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <span class="plan-icon">🏠</span>
+                    <h3>Plan Familiar Plus</h3>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">$18.000</span>
+                    <span class="price-period">/mes</span>
+                </div>
+                <ul class="plan-features">
+                    <li>✓ Titular + hasta 8 familiares</li>
+                    <li>✓ Hasta 10 consultas mensuales*</li>
+                    <li>✓ Turnos online 24/7</li>
+                    <li>✓ Historial médico digital</li>
+                    <li>✓ Atención prioritaria VIP</li>
+                    <li>✓ Atención en ambos consultorios</li>
+                </ul>
+                <a href="{{ url_for('register') }}" class="btn btn-plan">Elegir Plan</a>
+                <p class="plan-note">*Incluidas en el abono mensual</p>
             </div>
         </div>
     </section>
 
-    <!-- Simulador de Costo -->
-    <section class="section simulator">
-        <h2>💰 Simulá el Costo para Tu Familia</h2>
-        <div class="card">
-            <form method="POST" action="{{ url_for('simular_costo') }}">
-                <div class="form-group">
-                    <label>¿Cuántos integrantes adicionales tiene tu grupo familiar?</label>
-                    <input type="number" name="cant_familiares" min="0" max="10" value="0" class="form-control">
-                    <small>Costo base por consulta: ${{ "%.2f"|format(costo_base) }}</small>
+    <!-- Beneficios -->
+    <section class="section benefits">
+        <h2 class="section-title">¿Por qué elegirnos?</h2>
+        <div class="grid benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">💰</div>
+                <h3>Abono Mensual Fijo</h3>
+                <p>Pagá un monto fijo según tu grupo familiar, sin sorpresas ni gastos adicionales</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">🏥</div>
+                <h3>Dos Consultorios</h3>
+                <p>Atendete en cualquiera de nuestros dos consultorios según tu conveniencia</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">📅</div>
+                <h3>Turnos Online 24/7</h3>
+                <p>Solicita turnos en cualquier momento desde la comodidad de tu casa</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">📋</div>
+                <h3>Historial Digital</h3>
+                <p>Accede a tu historial médico completo en cualquier momento</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nuestros Consultorios -->
+    <section class="section consultorios-section" id="consultorios">
+        <h2 class="section-title">📍 Nuestros Consultorios</h2>
+        <p class="section-subtitle">Visitanos en cualquiera de nuestras dos sedes</p>
+        
+        <div class="consultorios-grid">
+            <!-- Consultorio 1 -->
+            <div class="consultorio-card">
+                <div class="consultorio-header">
+                    <span class="consultorio-number">1</span>
+                    <h3>Consultorio Central</h3>
                 </div>
-                <button type="submit" class="btn btn-primary">Calcular Costo</button>
-            </form>
+                <div class="consultorio-info">
+                    <p class="consultorio-direccion">
+                        <span class="info-icon">📍</span>
+                        <span class="info-text">Dirección a configurar</span>
+                    </p>
+                    <p class="consultorio-telefono">
+                        <span class="info-icon">📞</span>
+                        <span class="info-text">Teléfono a configurar</span>
+                    </p>
+                    <p class="consultorio-horario">
+                        <span class="info-icon">🕐</span>
+                        <span class="info-text">Lunes a Viernes: 8:00 - 20:00</span>
+                    </p>
+                    <p class="consultorio-horario">
+                        <span class="info-icon">📅</span>
+                        <span class="info-text">Sábados: 8:00 - 13:00</span>
+                    </p>
+                </div>
+                <div class="consultorio-mapa">
+                    <!-- Aquí podrías insertar un iframe de Google Maps -->
+                    <div class="mapa-placeholder">
+                        <p>🗺️ Mapa próximamente</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consultorio 2 -->
+            <div class="consultorio-card">
+                <div class="consultorio-header">
+                    <span class="consultorio-number">2</span>
+                    <h3>Consultorio Sucursal</h3>
+                </div>
+                <div class="consultorio-info">
+                    <p class="consultorio-direccion">
+                        <span class="info-icon">📍</span>
+                        <span class="info-text">Dirección a configurar</span>
+                    </p>
+                    <p class="consultorio-telefono">
+                        <span class="info-icon">📞</span>
+                        <span class="info-text">Teléfono a configurar</span>
+                    </p>
+                    <p class="consultorio-horario">
+                        <span class="info-icon">🕐</span>
+                        <span class="info-text">Lunes a Viernes: 8:00 - 20:00</span>
+                    </p>
+                    <p class="consultorio-horario">
+                        <span class="info-icon">📅</span>
+                        <span class="info-text">Sábados: 8:00 - 13:00</span>
+                    </p>
+                </div>
+                <div class="consultorio-mapa">
+                    <!-- Aquí podrías insertar un iframe de Google Maps -->
+                    <div class="mapa-placeholder">
+                        <p>🗺️ Mapa próximamente</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -80,8 +248,8 @@
     <section class="section cta">
         <div class="cta-box">
             <h2>¿Listo para cuidar tu salud?</h2>
-            <p>Registrate ahora y accedé a todos nuestros servicios</p>
-            <a href="{{ url_for('register') }}" class="btn btn-large">Crear Cuenta Gratis</a>
+            <p>Unite a nuestra prepaga y empezá a disfrutar de atención médica de calidad para vos y tu familia</p>
+            <a href="{{ url_for('register') }}" class="btn btn-large btn-cta">Crear Cuenta Gratis</a>
         </div>
     </section>
     {% endif %}

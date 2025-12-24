@@ -1,253 +1,74 @@
 {% extends "base.html" %}
 
-{% block title %}Gestión de Usuarios - Admin{% endblock %}
+{% block title %}Usuarios Administrativos{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2 class="mb-0">Gestión de Usuarios</h2>
-            <p class="text-muted">Administra los usuarios del sistema</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{{ url_for('admin.nuevo_usuario') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nuevo Usuario
-            </a>
-        </div>
+<div class="container">
+    <div class="section-header">
+        <h1>👥 Usuarios Administrativos</h1>
+        <a href="{{ url_for('admin.crear_usuario_admin') }}" class="btn btn-primary">
+            + Nuevo Usuario
+        </a>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ url_for('admin.listar_usuarios') }}" class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" name="buscar" class="form-control" placeholder="Buscar por nombre, DNI o email" value="{{ request.args.get('buscar', '') }}">
-                </div>
-                <div class="col-md-2">
-                    <select name="rol" class="form-select">
-                        <option value="">Todos los roles</option>
-                        <option value="PACIENTE" {% if request.args.get('rol') == 'PACIENTE' %}selected{% endif %}>Paciente</option>
-                        <option value="ESPECIALISTA" {% if request.args.get('rol') == 'ESPECIALISTA' %}selected{% endif %}>Especialista</option>
-                        <option value="RECEPCION" {% if request.args.get('rol') == 'RECEPCION' %}selected{% endif %}>Recepción</option>
-                        <option value="ADMIN" {% if request.args.get('rol') == 'ADMIN' %}selected{% endif %}>Admin</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="estado" class="form-select">
-                        <option value="">Todos los estados</option>
-                        <option value="activo" {% if request.args.get('estado') == 'activo' %}selected{% endif %}>Activos</option>
-                        <option value="inactivo" {% if request.args.get('estado') == 'inactivo' %}selected{% endif %}>Inactivos</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        <i class="bi bi-search"></i> Buscar
-                    </button>
-                </div>
-                <div class="col-md-3">
-                    <a href="{{ url_for('admin.listar_usuarios') }}" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-x-circle"></i> Limpiar filtros
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {% if usuarios %}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre Completo</th>
-                            <th>DNI</th>
-                            <th>Email</th>
-                            <th>Teléfono</th>
-                            <th>Rol</th>
-                            <th>Estado</th>
-                            <th>Fecha Registro</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for usuario in usuarios %}
-                        <tr>
-                            <td>{{ usuario.id }}</td>
-                            <td>
-                                <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
-                                {% if usuario.rol.value == 'ESPECIALISTA' and usuario.especialidad %}
-                                <br><small class="text-muted">{{ usuario.especialidad.nombre }}</small>
-                                {% endif %}
-                            </td>
-                            <td>{{ usuario.dni }}</td>
-                            <td>{{ usuario.email }}</td>
-                            <td>{{ usuario.telefono or '-' }}</td>
-                            <td>
-                                {% if usuario.rol.value == 'ADMIN' %}
-                                <span class="badge bg-danger">Admin</span>
-                                {% elif usuario.rol.value == 'RECEPCION' %}
-                                <span class="badge bg-info">Recepción</span>
-                                {% elif usuario.rol.value == 'ESPECIALISTA' %}
-                                <span class="badge bg-primary">Especialista</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Paciente</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if usuario.activo %}
-                                <span class="badge bg-success">Activo</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Inactivo</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ usuario.fecha_creacion.strftime('%d/%m/%Y') if usuario.fecha_creacion else '-' }}</td>
-                            <td class="text-center">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{{ url_for('admin.ver_usuario', usuario_id=usuario.id) }}"
-                                       class="btn btn-outline-primary"
-                                       title="Ver detalles">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{{ url_for('admin.editar_usuario', usuario_id=usuario.id) }}"
-                                       class="btn btn-outline-warning"
-                                       title="Editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    {% if usuario.activo %}
-                                    <button type="button"
-                                            class="btn btn-outline-danger"
-                                            title="Desactivar"
-                                            onclick="confirmarCambioEstado({{ usuario.id }}, 'desactivar')">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
-                                    {% else %}
-                                    <button type="button"
-                                            class="btn btn-outline-success"
-                                            title="Activar"
-                                            onclick="confirmarCambioEstado({{ usuario.id }}, 'activar')">
-                                        <i class="bi bi-check-circle"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if pagination %}
-            <nav aria-label="Navegación de páginas">
-                <ul class="pagination justify-content-center mb-0">
-                    {% if pagination.has_prev %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('admin.listar_usuarios', page=pagination.prev_num, buscar=request.args.get('buscar', ''), rol=request.args.get('rol', ''), estado=request.args.get('estado', '')) }}">
-                            Anterior
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Anterior</span>
-                    </li>
-                    {% endif %}
-
-                    {% for page_num in pagination.iter_pages() %}
-                        {% if page_num %}
-                            {% if page_num == pagination.page %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ page_num }}</span>
-                            </li>
-                            {% else %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('admin.listar_usuarios', page=page_num, buscar=request.args.get('buscar', ''), rol=request.args.get('rol', ''), estado=request.args.get('estado', '')) }}">
-                                    {{ page_num }}
-                                </a>
-                            </li>
-                            {% endif %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre Completo</th>
+                    <th>DNI</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Fecha Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.id }}</td>
+                    <td>{{ usuario.nombre }} {{ usuario.apellido }}</td>
+                    <td>{{ usuario.dni }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.telefono or '-' }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-danger' if usuario.rol.value == 'admin' else 'badge-info' }}">
+                            {{ usuario.rol.value|upper }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if usuario.activo %}
+                            <span class="badge badge-success">ACTIVO</span>
                         {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
+                            <span class="badge badge-danger">INACTIVO</span>
                         {% endif %}
-                    {% endfor %}
-
-                    {% if pagination.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('admin.listar_usuarios', page=pagination.next_num, buscar=request.args.get('buscar', ''), rol=request.args.get('rol', ''), estado=request.args.get('estado', '')) }}">
-                            Siguiente
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Siguiente</span>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
-        </div>
+                    </td>
+                    <td>{{ usuario.fecha_registro.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.editar_usuario_admin', id=usuario.id) }}" 
+                           class="btn btn-small btn-secondary">Editar</a>
+                        
+                        {% if usuario.activo %}
+                        <form method="POST" action="{{ url_for('admin.desactivar_usuario_admin', id=usuario.id) }}" 
+                              style="display: inline;"
+                              onsubmit="return confirm('¿Desactivar este usuario?')">
+                            <button type="submit" class="btn btn-small btn-danger">Desactivar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% else %}
-    <div class="alert alert-info text-center">
-        <i class="bi bi-info-circle"></i>
-        No se encontraron usuarios con los criterios de búsqueda especificados.
+
+    {% if not usuarios %}
+    <div class="alert alert-info">
+        <p>No hay usuarios administrativos registrados.</p>
     </div>
     {% endif %}
-
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total Usuarios</h5>
-                    <h2 class="text-primary">{{ total_usuarios or 0 }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Pacientes</h5>
-                    <h2 class="text-secondary">{{ total_pacientes or 0 }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Especialistas</h5>
-                    <h2 class="text-primary">{{ total_especialistas or 0 }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Usuarios Activos</h5>
-                    <h2 class="text-success">{{ total_activos or 0 }}</h2>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
-
-<form id="formCambioEstado" method="POST" style="display: none;">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-</form>
-
-<script>
-function confirmarCambioEstado(usuarioId, accion) {
-    const mensaje = accion === 'desactivar'
-        ? '¿Está seguro que desea desactivar este usuario?'
-        : '¿Está seguro que desea activar este usuario?';
-
-    if (confirm(mensaje)) {
-        const form = document.getElementById('formCambioEstado');
-        form.action = accion === 'desactivar'
-            ? "{{ url_for('admin.desactivar_usuario', usuario_id=0) }}".replace('0', usuarioId)
-            : "{{ url_for('admin.activar_usuario', usuario_id=0) }}".replace('0', usuarioId);
-        form.submit();
-    }
-}
-</script>
 {% endblock %}

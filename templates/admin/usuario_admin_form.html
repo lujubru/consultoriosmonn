@@ -4,11 +4,10 @@
 
 {% block content %}
 <div class="container">
-    <div class="form-container">
+    <div class="form-container" style="max-width: 600px;">
         <h1>{{ 'Editar' if usuario else 'Nuevo' }} Usuario Administrativo</h1>
 
         <form method="POST">
-            <!-- Datos Personales -->
             <fieldset>
                 <legend>Datos Personales</legend>
 
@@ -31,6 +30,7 @@
                         <label for="dni">DNI *</label>
                         <input type="text" id="dni" name="dni" class="form-control"
                                value="{{ usuario.dni if usuario else '' }}"
+                               pattern="[0-9]{7,8}"
                                {{ 'readonly' if usuario }} required>
                     </div>
 
@@ -54,58 +54,40 @@
                            class="form-control" minlength="6" required>
                     <small class="form-text">Mínimo 6 caracteres</small>
                 </div>
+
+                <div class="form-group">
+                    <label for="password_confirm">Confirmar Contraseña *</label>
+                    <input type="password" id="password_confirm" name="password_confirm" 
+                           class="form-control" minlength="6" required>
+                </div>
                 {% endif %}
             </fieldset>
 
-            <!-- Rol -->
             <fieldset>
-                <legend>Rol del Usuario</legend>
+                <legend>Rol y Permisos</legend>
 
-                <div class="roles-selector">
-                    <label class="role-card">
-                        <input type="radio" name="rol" value="admin" 
-                               {{ 'checked' if usuario and usuario.rol.value == 'admin' }}>
-                        <div class="role-content">
-                            <span class="role-icon">🔑</span>
-                            <strong>Administrador</strong>
-                            <p>Acceso total al sistema</p>
-                            <ul>
-                                <li>Gestionar especialidades</li>
-                                <li>Gestionar especialistas</li>
-                                <li>Gestionar usuarios</li>
-                                <li>Ver/modificar turnos</li>
-                                <li>Aprobar pagos</li>
-                                <li>Ver movimientos financieros</li>
-                                <li>Configuraciones del sistema</li>
-                            </ul>
-                        </div>
-                    </label>
+                <div class="form-group">
+                    <label for="rol">Rol *</label>
+                    <select id="rol" name="rol" class="form-control" required 
+                            {{ 'disabled' if usuario }}>
+                        <option value="">Seleccionar...</option>
+                        <option value="admin" 
+                                {{ 'selected' if usuario and usuario.rol.value == 'admin' }}>
+                            Administrador (Acceso completo)
+                        </option>
+                        <option value="recepcion" 
+                                {{ 'selected' if usuario and usuario.rol.value == 'recepcion' }}>
+                            Recepción (Acceso limitado)
+                        </option>
+                    </select>
+                </div>
 
-                    <label class="role-card">
-                        <input type="radio" name="rol" value="recepcion" 
-                               {{ 'checked' if (usuario and usuario.rol.value == 'recepcion') or not usuario }}>
-                        <div class="role-content">
-                            <span class="role-icon">🧾</span>
-                            <strong>Recepción</strong>
-                            <p>Gestión de atención al paciente</p>
-                            <ul>
-                                <li>Ver turnos del día</li>
-                                <li>Buscar pacientes por DNI</li>
-                                <li>Ver estado de pagos</li>
-                                <li>Marcar turnos como abonados (efectivo)</li>
-                                <li>Validar asistencia del paciente</li>
-                            </ul>
-                            <div class="role-restrictions">
-                                <strong>🚫 NO puede:</strong>
-                                <ul>
-                                    <li>Modificar especialidades</li>
-                                    <li>Modificar doctores</li>
-                                    <li>Modificar precios</li>
-                                    <li>Ver movimientos financieros</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </label>
+                <div class="alert alert-info">
+                    <strong>ℹ️ Permisos según rol:</strong>
+                    <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                        <li><strong>Administrador:</strong> Acceso completo al sistema</li>
+                        <li><strong>Recepción:</strong> Solo turnos del día, búsqueda de pacientes y pagos en efectivo</li>
+                    </ul>
                 </div>
             </fieldset>
 
@@ -119,77 +101,18 @@
     </div>
 </div>
 
-<style>
-.roles-selector {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.role-card {
-    cursor: pointer;
-}
-
-.role-card input[type="radio"] {
-    display: none;
-}
-
-.role-content {
-    padding: 1.5rem;
-    border: 3px solid var(--border);
-    border-radius: var(--radius);
-    transition: var(--transition);
-}
-
-.role-card input[type="radio"]:checked + .role-content {
-    border-color: var(--primary);
-    background-color: rgba(37, 99, 235, 0.05);
-    box-shadow: var(--shadow-lg);
-}
-
-.role-card:hover .role-content {
-    border-color: var(--primary);
-}
-
-.role-icon {
-    font-size: 2.5rem;
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.role-content strong {
-    font-size: 1.25rem;
-    color: var(--primary);
-}
-
-.role-content > p {
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-}
-
-.role-content ul {
-    margin: 0;
-    padding-left: 1.25rem;
-    font-size: 0.9rem;
-}
-
-.role-content li {
-    margin-bottom: 0.25rem;
-}
-
-.role-restrictions {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-}
-
-.role-restrictions strong {
-    color: var(--danger);
-    font-size: 0.9rem;
-}
-
-.role-restrictions ul {
-    color: var(--text-muted);
-}
-</style>
+{% if not usuario %}
+<script>
+// Validar que las contraseñas coincidan
+document.querySelector('form').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('password_confirm').value;
+    
+    if (password !== confirm) {
+        e.preventDefault();
+        alert('Las contraseñas no coinciden');
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

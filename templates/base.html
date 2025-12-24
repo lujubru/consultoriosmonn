@@ -8,6 +8,124 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#007bff">
+    <style>
+        /* Estilos para el menú hamburguesa */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1001;
+        }
+        
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background-color: #333;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+        
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+        
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+        
+        /* Estilos responsive para el menú */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+            
+            .nav-actions {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 80%;
+                max-width: 300px;
+                height: 100vh;
+                background: white;
+                flex-direction: column;
+                align-items: stretch !important;
+                padding: 80px 20px 20px;
+                box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+                transition: right 0.3s ease;
+                overflow-y: auto;
+                z-index: 1000;
+            }
+            
+            .nav-actions.active {
+                right: 0;
+            }
+            
+            .nav-actions > * {
+                margin: 8px 0 !important;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .user-name {
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 8px;
+                font-weight: 600;
+            }
+            
+            .dropdown {
+                position: relative;
+            }
+            
+            .dropdown-content {
+                position: static;
+                display: none;
+                box-shadow: none;
+                background: #f8f9fa;
+                margin-top: 8px;
+                border-radius: 8px;
+            }
+            
+            .dropdown.active .dropdown-content {
+                display: block;
+            }
+            
+            .dropdown-content a {
+                padding: 12px 16px;
+            }
+            
+            /* Overlay para cerrar el menú */
+            .menu-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            
+            .menu-overlay.active {
+                display: block;
+            }
+        }
+        
+        /* Asegurar que el header no se solape con el contenido */
+        .header-nav {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
 
@@ -16,13 +134,24 @@
         <button id="btn-install" class="btn-primary" style="margin-left: 10px; background: white; color: #007bff;">Instalar</button>
         <button onclick="document.getElementById('install-banner').style.display='none'" style="background: none; border: none; color: white; margin-left: 10px; cursor: pointer;">✕</button>
     </div>
+    
+    <!-- Overlay para cerrar el menú en móviles -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    
     <nav class="header-nav">
         <a href="{{ url_for('index') }}" class="logo-container">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Consultorios Monn" class="logo">
             <span class="brand-name">Consultorios Monn</span>
         </a>
         
-        <div class="nav-actions">
+        <!-- Botón hamburguesa -->
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        
+        <div class="nav-actions" id="navActions">
             {% if session.get('user_id') %}
                 <span class="user-name">👤 {{ session.get('user_nombre') }}</span>
 
@@ -110,10 +239,8 @@
         const btnInstall = document.getElementById('btn-install');
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Evita que el navegador muestre su propio mensaje por defecto
             e.preventDefault();
             deferredPrompt = e;
-            // Muestra nuestro banner personalizado
             installBanner.style.display = 'block';
         });
 
@@ -126,6 +253,58 @@
                 }
                 deferredPrompt = null;
                 installBanner.style.display = 'none';
+            }
+        });
+
+        // Funcionalidad del menú hamburguesa
+        const hamburger = document.getElementById('hamburger');
+        const navActions = document.getElementById('navActions');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const dropdowns = document.querySelectorAll('.dropdown');
+
+        function toggleMenu() {
+            hamburger.classList.toggle('active');
+            navActions.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            document.body.style.overflow = navActions.classList.contains('active') ? 'hidden' : '';
+        }
+
+        function closeMenu() {
+            hamburger.classList.remove('active');
+            navActions.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        hamburger.addEventListener('click', toggleMenu);
+        menuOverlay.addEventListener('click', closeMenu);
+
+        // Cerrar menú al hacer clic en un enlace (excepto dropdowns)
+        navActions.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown')) {
+                    closeMenu();
+                }
+            });
+        });
+
+        // Funcionalidad de dropdowns en móvil
+        dropdowns.forEach(dropdown => {
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+            if (toggle) {
+                toggle.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        dropdown.classList.toggle('active');
+                    }
+                });
+            }
+        });
+
+        // Cerrar menú al cambiar el tamaño de pantalla
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                closeMenu();
             }
         });
     </script>

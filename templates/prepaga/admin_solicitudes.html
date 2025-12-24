@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitudes de Prepaga{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1>Solicitudes de Suscripción Pendientes</h1>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>DNI</th>
+                            <th>Plan</th>
+                            <th>Precio</th>
+                            <th>Fecha Solicitud</th>
+                            <th>Comprobante</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suscripcion in solicitudes %}
+                        <tr>
+                            <td>{{ suscripcion.id }}</td>
+                            <td>{{ suscripcion.usuario.nombre }} {{ suscripcion.usuario.apellido }}</td>
+                            <td>{{ suscripcion.usuario.dni }}</td>
+                            <td>{{ suscripcion.plan.nombre }}</td>
+                            <td>${{ suscripcion.plan.precio_mensual }}</td>
+                            <td>{{ suscripcion.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                {% if suscripcion.comprobante_inicial %}
+                                <a href="{{ url_for('prepaga.ver_comprobante', tipo='inicial', id=suscripcion.id) }}" 
+                                   class="btn btn-sm btn-info" target="_blank">
+                                    <i class="fas fa-file"></i> Ver
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Sin comprobante</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('prepaga.aprobar_solicitud', suscripcion_id=suscripcion.id) }}" 
+                                      style="display: inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-success" 
+                                            onclick="return confirm('¿Aprobar esta solicitud?');">
+                                        <i class="fas fa-check"></i> Aprobar
+                                    </button>
+                                </form>
+                                
+                                <button type="button" class="btn btn-sm btn-danger" 
+                                        data-toggle="modal" data-target="#rechazarModal{{ suscripcion.id }}">
+                                    <i class="fas fa-times"></i> Rechazar
+                                </button>
+                                
+                                <!-- Modal de Rechazo -->
+                                <div class="modal fade" id="rechazarModal{{ suscripcion.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Rechazar Solicitud</h5>
+                                                <button type="button" class="close" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('prepaga.rechazar_solicitud', suscripcion_id=suscripcion.id) }}">
+                                                <div class="modal-body">
+                                                    <div class="form-group">
+                                                        <label>Motivo del rechazo:</label>
+                                                        <textarea name="motivo_rechazo" class="form-control" 
+                                                                  rows="3" required></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                        Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">
+                                                        Rechazar Solicitud
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No hay solicitudes pendientes</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,6 +14,10 @@ from models import (db, Usuario, GrupoFamiliar, Especialidad, Turno, Pago,
 from admin_routes import admin_bp
 from models_admin import EspecialistaEspecialidad
 from turno_generator import GeneradorTurnos
+from prepaga_routes import prepaga_bp
+from models_prepaga import (SuscripcionPrepaga, EstadoSuscripcion, 
+                            HistorialConsultasPrepaga, PagoMensualPrepaga, EstadoPagoMensual)
+
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -21,6 +25,7 @@ db.init_app(app)
 
 # Registrar Blueprint de administración
 app.register_blueprint(admin_bp)
+app.register_blueprint(prepaga_bp)
 
 # ==================== DECORADORES ====================
 
@@ -224,35 +229,35 @@ def logout():
 
 # ==================== RUTAS USUARIO ====================
 
-@app.route('/dashboard')
-@login_required
-def dashboard_user():
-    usuario = Usuario.query.get(session['user_id'])
+# @app.route('/dashboard')
+# @login_required
+# def dashboard_user():
+#     usuario = Usuario.query.get(session['user_id'])
     
-    # Turnos próximos
-    turnos_proximos = Turno.query.filter(
-        Turno.paciente_id == usuario.id,
-        Turno.fecha >= date.today(),
-        Turno.estado.in_([EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO])
-    ).order_by(Turno.fecha, Turno.hora).limit(5).all()
+#     # Turnos próximos
+#     turnos_proximos = Turno.query.filter(
+#         Turno.paciente_id == usuario.id,
+#         Turno.fecha >= date.today(),
+#         Turno.estado.in_([EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO])
+#     ).order_by(Turno.fecha, Turno.hora).limit(5).all()
     
-    # Pagos pendientes
-    pagos_pendientes = Pago.query.join(Turno).filter(
-        Turno.paciente_id == usuario.id,
-        Pago.estado == EstadoPago.PENDIENTE
-    ).all()
+#     # Pagos pendientes
+#     pagos_pendientes = Pago.query.join(Turno).filter(
+#         Turno.paciente_id == usuario.id,
+#         Pago.estado == EstadoPago.PENDIENTE
+#     ).all()
     
-    # Grupo familiar
-    grupo_familiar = GrupoFamiliar.query.filter_by(
-        usuario_id=usuario.id,
-        activo=True
-    ).all()
+#     # Grupo familiar
+#     grupo_familiar = GrupoFamiliar.query.filter_by(
+#         usuario_id=usuario.id,
+#         activo=True
+#     ).all()
     
-    return render_template('dashboard_user.html',
-                         usuario=usuario,
-                         turnos_proximos=turnos_proximos,
-                         pagos_pendientes=pagos_pendientes,
-                         grupo_familiar=grupo_familiar)
+#     return render_template('dashboard_user.html',
+#                          usuario=usuario,
+#                          turnos_proximos=turnos_proximos,
+#                          pagos_pendientes=pagos_pendientes,
+#                          grupo_familiar=grupo_familiar)
 
 # ==================== TURNOS ====================
 # @app.route('/turnos/nuevo', methods=['GET', 'POST'])
@@ -299,92 +304,92 @@ def dashboard_user():
 #                            grupo_familiar=grupo_familiar,
 #                            today=date.today().isoformat())
 
-@app.route('/turnos/nuevo', methods=['GET', 'POST'])
-@login_required
-def nuevo_turno():
-    if request.method == 'POST':
-        try:
-            # 1. Capturar todos los datos del formulario
-            paciente_id = session['user_id']
-            especialidad_id = request.form.get('especialidad_id')
-            especialista_id = request.form.get('especialista_id')  # ID del especialista seleccionado
-            familiar_id = request.form.get('familiar_id')  # Opcional
-            fecha_str = request.form.get('fecha')
-            hora_str = request.form.get('hora')
-            motivo_consulta = request.form.get('motivo_consulta')
+# @app.route('/turnos/nuevo', methods=['GET', 'POST'])ESTE ES EL ULTIMO QUE FUNCIONA
+# @login_required
+# def nuevo_turno():
+#     if request.method == 'POST':
+#         try:
+#             # 1. Capturar todos los datos del formulario
+#             paciente_id = session['user_id']
+#             especialidad_id = request.form.get('especialidad_id')
+#             especialista_id = request.form.get('especialista_id')  # ID del especialista seleccionado
+#             familiar_id = request.form.get('familiar_id')  # Opcional
+#             fecha_str = request.form.get('fecha')
+#             hora_str = request.form.get('hora')
+#             motivo_consulta = request.form.get('motivo_consulta')
             
-            # 2. Validaciones básicas
-            if not all([especialidad_id, especialista_id, fecha_str, hora_str]):
-                flash('Por favor complete todos los campos obligatorios', 'danger')
-                return redirect(url_for('nuevo_turno'))
+#             # 2. Validaciones básicas
+#             if not all([especialidad_id, especialista_id, fecha_str, hora_str]):
+#                 flash('Por favor complete todos los campos obligatorios', 'danger')
+#                 return redirect(url_for('nuevo_turno'))
             
-            # 3. Convertir fecha y hora
-            fecha_turno = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-            hora_turno = datetime.strptime(hora_str, '%H:%M').time()
+#             # 3. Convertir fecha y hora
+#             fecha_turno = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+#             hora_turno = datetime.strptime(hora_str, '%H:%M').time()
             
-            # 4. Validar que no exista turno en ese horario para ese especialista
-            turno_existente = Turno.query.filter_by(
-                especialista_id=int(especialista_id),
-                fecha=fecha_turno,
-                hora=hora_turno,
-                estado=EstadoTurno.PENDIENTE
-            ).first()
+#             # 4. Validar que no exista turno en ese horario para ese especialista
+#             turno_existente = Turno.query.filter_by(
+#                 especialista_id=int(especialista_id),
+#                 fecha=fecha_turno,
+#                 hora=hora_turno,
+#                 estado=EstadoTurno.PENDIENTE
+#             ).first()
             
-            if turno_existente:
-                flash('Ese horario ya está ocupado para este especialista', 'danger')
-                return redirect(url_for('nuevo_turno'))
+#             if turno_existente:
+#                 flash('Ese horario ya está ocupado para este especialista', 'danger')
+#                 return redirect(url_for('nuevo_turno'))
             
-            # 5. Crear el turno
-            nuevo_turno = Turno(
-                paciente_id=paciente_id,
-                especialista_id=int(especialista_id),
-                especialidad_id=int(especialidad_id),
-                familiar_id=int(familiar_id) if familiar_id else None,
-                fecha=fecha_turno,
-                hora=hora_turno,
-                motivo_consulta=motivo_consulta,
-                estado=EstadoTurno.PENDIENTE
-            )
+#             # 5. Crear el turno
+#             nuevo_turno = Turno(
+#                 paciente_id=paciente_id,
+#                 especialista_id=int(especialista_id),
+#                 especialidad_id=int(especialidad_id),
+#                 familiar_id=int(familiar_id) if familiar_id else None,
+#                 fecha=fecha_turno,
+#                 hora=hora_turno,
+#                 motivo_consulta=motivo_consulta,
+#                 estado=EstadoTurno.PENDIENTE
+#             )
             
-            db.session.add(nuevo_turno)
-            db.session.flush()  # Obtener el ID del turno sin hacer commit
+#             db.session.add(nuevo_turno)
+#             db.session.flush()  # Obtener el ID del turno sin hacer commit
             
-            # 6. Calcular costo con descuento por grupo familiar
-            costo = calcular_costo_grupo_familiar(paciente_id)
+#             # 6. Calcular costo con descuento por grupo familiar
+#             costo = calcular_costo_grupo_familiar(paciente_id)
             
-            # 7. Crear pago asociado automáticamente
-            nuevo_pago = Pago(
-                turno_id=nuevo_turno.id,
-                monto=costo,
-                estado=EstadoPago.PENDIENTE
-            )
+#             # 7. Crear pago asociado automáticamente
+#             nuevo_pago = Pago(
+#                 turno_id=nuevo_turno.id,
+#                 monto=costo,
+#                 estado=EstadoPago.PENDIENTE
+#             )
             
-            db.session.add(nuevo_pago)
-            db.session.commit()
+#             db.session.add(nuevo_pago)
+#             db.session.commit()
             
-            flash('¡Turno agendado con éxito! Debe subir el comprobante de pago para confirmar.', 'success')
-            return redirect(url_for('mis_turnos'))
+#             flash('¡Turno agendado con éxito! Debe subir el comprobante de pago para confirmar.', 'success')
+#             return redirect(url_for('mis_turnos'))
             
-        except ValueError as ve:
-            db.session.rollback()
-            flash(f'Error en el formato de fecha u hora: {str(ve)}', 'danger')
-            return redirect(url_for('nuevo_turno'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error al crear turno: {str(e)}', 'danger')
-            return redirect(url_for('nuevo_turno'))
+#         except ValueError as ve:
+#             db.session.rollback()
+#             flash(f'Error en el formato de fecha u hora: {str(ve)}', 'danger')
+#             return redirect(url_for('nuevo_turno'))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f'Error al crear turno: {str(e)}', 'danger')
+#             return redirect(url_for('nuevo_turno'))
     
-    # GET - Cargar datos para el formulario
-    especialidades = Especialidad.query.filter_by(activo=True).all()
-    grupo_familiar = GrupoFamiliar.query.filter_by(
-        usuario_id=session['user_id'],
-        activo=True
-    ).all()
+#     # GET - Cargar datos para el formulario
+#     especialidades = Especialidad.query.filter_by(activo=True).all()
+#     grupo_familiar = GrupoFamiliar.query.filter_by(
+#         usuario_id=session['user_id'],
+#         activo=True
+#     ).all()
     
-    return render_template('turnos_nuevo.html',
-                         especialidades=especialidades,
-                         grupo_familiar=grupo_familiar,
-                         today=date.today().isoformat())
+#     return render_template('turnos_nuevo.html',
+#                          especialidades=especialidades,
+#                          grupo_familiar=grupo_familiar,
+#                          today=date.today().isoformat())
 
 # @app.route('/turnos/nuevo', methods=['GET', 'POST'])
 # @login_required
@@ -503,6 +508,266 @@ def nuevo_turno():
 #     horarios_disponibles = [h for h in horarios if h not in horarios_ocupados]
     
 #     return {'horarios': horarios_disponibles}
+
+@app.route('/turnos/nuevo', methods=['GET', 'POST'])
+@login_required
+def nuevo_turno():
+    if request.method == 'POST':
+        try:
+            # 1. Capturar todos los datos del formulario
+            paciente_id = session['user_id']
+            especialidad_id = request.form.get('especialidad_id')
+            especialista_id = request.form.get('especialista_id')
+            familiar_id = request.form.get('familiar_id')
+            fecha_str = request.form.get('fecha')
+            hora_str = request.form.get('hora')
+            motivo_consulta = request.form.get('motivo_consulta')
+            
+            # 2. Validaciones básicas
+            if not all([especialidad_id, especialista_id, fecha_str, hora_str]):
+                flash('Por favor complete todos los campos obligatorios', 'danger')
+                return redirect(url_for('nuevo_turno'))
+            
+            # 3. Convertir fecha y hora
+            fecha_turno = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            hora_turno = datetime.strptime(hora_str, '%H:%M').time()
+            
+            # 4. Validar que no exista turno en ese horario para ese especialista
+            turno_existente = Turno.query.filter_by(
+                especialista_id=int(especialista_id),
+                fecha=fecha_turno,
+                hora=hora_turno,
+                estado=EstadoTurno.PENDIENTE
+            ).first()
+            
+            if turno_existente:
+                flash('Ese horario ya está ocupado para este especialista', 'danger')
+                return redirect(url_for('nuevo_turno'))
+            
+            # 5. Verificar si el usuario tiene suscripción de prepaga activa
+            suscripcion = SuscripcionPrepaga.query.filter_by(
+                usuario_id=paciente_id,
+                estado=EstadoSuscripcion.ACTIVA
+            ).first()
+            
+            # 6. Crear el turno
+            nuevo_turno = Turno(
+                paciente_id=paciente_id,
+                especialista_id=int(especialista_id),
+                especialidad_id=int(especialidad_id),
+                familiar_id=int(familiar_id) if familiar_id else None,
+                fecha=fecha_turno,
+                hora=hora_turno,
+                motivo_consulta=motivo_consulta,
+                estado=EstadoTurno.PENDIENTE
+            )
+            
+            db.session.add(nuevo_turno)
+            db.session.flush()  # Obtener el ID del turno
+            
+            # 7. Procesar según tenga o no prepaga
+            if suscripcion and suscripcion.tiene_consultas_disponibles():
+                # ✅ TIENE PREPAGA CON CONSULTAS DISPONIBLES
+                
+                # Consumir consulta
+                consultas_antes = suscripcion.consultas_restantes()
+                suscripcion.consumir_consulta()
+                consultas_despues = suscripcion.consultas_restantes()
+                
+                # Registrar en historial
+                historial = HistorialConsultasPrepaga(
+                    suscripcion_id=suscripcion.id,
+                    turno_id=nuevo_turno.id,
+                    consultas_antes=consultas_antes,
+                    consultas_despues=consultas_despues
+                )
+                db.session.add(historial)
+                
+                # El turno se confirma automáticamente (sin necesidad de pago)
+                nuevo_turno.estado = EstadoTurno.CONFIRMADO
+                
+                db.session.commit()
+                
+                flash(f'¡Turno agendado con éxito! Consultas restantes: {consultas_despues}', 'success')
+                
+            else:
+                # ❌ NO TIENE PREPAGA O SE QUEDÓ SIN CONSULTAS
+                
+                # Calcular costo con descuento por grupo familiar
+                costo = calcular_costo_grupo_familiar(paciente_id)
+                
+                # Crear pago asociado
+                nuevo_pago = Pago(
+                    turno_id=nuevo_turno.id,
+                    monto=costo,
+                    estado=EstadoPago.PENDIENTE
+                )
+                
+                db.session.add(nuevo_pago)
+                db.session.commit()
+                
+                if suscripcion and not suscripcion.tiene_consultas_disponibles():
+                    flash('Se agotaron sus consultas de prepaga. Debe abonar esta consulta.', 'warning')
+                else:
+                    flash('Turno agendado. Debe subir el comprobante de pago para confirmar.', 'success')
+            
+            return redirect(url_for('mis_turnos'))
+            
+        except ValueError as ve:
+            db.session.rollback()
+            flash(f'Error en el formato de fecha u hora: {str(ve)}', 'danger')
+            return redirect(url_for('nuevo_turno'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear turno: {str(e)}', 'danger')
+            return redirect(url_for('nuevo_turno'))
+    
+    # GET - Cargar datos para el formulario
+    especialidades = Especialidad.query.filter_by(activo=True).all()
+    grupo_familiar = GrupoFamiliar.query.filter_by(
+        usuario_id=session['user_id'],
+        activo=True
+    ).all()
+    
+    # Obtener suscripción si existe
+    suscripcion = SuscripcionPrepaga.query.filter_by(
+        usuario_id=session['user_id'],
+        estado=EstadoSuscripcion.ACTIVA
+    ).first()
+    
+    return render_template('turnos_nuevo.html',
+                         especialidades=especialidades,
+                         grupo_familiar=grupo_familiar,
+                         suscripcion=suscripcion,
+                         today=date.today().isoformat())
+
+# AGREGAR ESTA NUEVA RUTA PARA EL DASHBOARD:
+
+@app.route('/dashboard')
+@login_required
+def dashboard_user():
+    usuario = Usuario.query.get(session['user_id'])
+    
+    # Turnos próximos
+    turnos_proximos = Turno.query.filter(
+        Turno.paciente_id == usuario.id,
+        Turno.fecha >= date.today(),
+        Turno.estado.in_([EstadoTurno.PENDIENTE, EstadoTurno.CONFIRMADO])
+    ).order_by(Turno.fecha, Turno.hora).limit(5).all()
+    
+    # Pagos pendientes (solo si no tiene prepaga)
+    pagos_pendientes = Pago.query.join(Turno).filter(
+        Turno.paciente_id == usuario.id,
+        Pago.estado == EstadoPago.PENDIENTE
+    ).all()
+    
+    # Grupo familiar
+    grupo_familiar = GrupoFamiliar.query.filter_by(
+        usuario_id=usuario.id,
+        activo=True
+    ).all()
+    
+    # Suscripción de prepaga
+    suscripcion = SuscripcionPrepaga.query.filter_by(
+        usuario_id=usuario.id
+    ).filter(
+        SuscripcionPrepaga.estado.in_([EstadoSuscripcion.ACTIVA, EstadoSuscripcion.PENDIENTE])
+    ).first()
+    
+    # Pago mensual pendiente (si tiene prepaga)
+    pago_mensual_pendiente = None
+    if suscripcion and suscripcion.estado == EstadoSuscripcion.ACTIVA:
+        hoy = date.today()
+        pago_mensual_pendiente = PagoMensualPrepaga.query.filter_by(
+            suscripcion_id=suscripcion.id,
+            mes=hoy.month,
+            anio=hoy.year
+        ).filter(
+            PagoMensualPrepaga.estado.in_([EstadoPagoMensual.PENDIENTE, EstadoPagoMensual.RECHAZADO])
+        ).first()
+    
+    return render_template('dashboard_user.html',
+                         usuario=usuario,
+                         turnos_proximos=turnos_proximos,
+                         pagos_pendientes=pagos_pendientes,
+                         grupo_familiar=grupo_familiar,
+                         suscripcion=suscripcion,
+                         pago_mensual_pendiente=pago_mensual_pendiente)
+
+# ACTUALIZAR EL COMANDO seed_db() PARA INCLUIR PLANES:
+
+@app.cli.command()
+def seed_db():
+    """Carga datos de ejemplo incluyendo planes de prepaga"""
+    
+    # Admin
+    admin = Usuario(
+        nombre="Admin",
+        apellido="Sistema",
+        dni="00000000",
+        email="admin@consultorio.com",
+        telefono="1234567890",
+        rol=RolUsuario.ADMIN
+    )
+    admin.set_password("admin123")
+    db.session.add(admin)
+    
+    # Especialidades
+    especialidades = [
+        Especialidad(nombre="Clínica Médica", costo_consulta=15000, duracion_turno=30),
+        Especialidad(nombre="Pediatría", costo_consulta=15000, duracion_turno=30),
+        Especialidad(nombre="Cardiología", costo_consulta=20000, duracion_turno=45),
+        Especialidad(nombre="Dermatología", costo_consulta=18000, duracion_turno=30),
+    ]
+    
+    for esp in especialidades:
+        db.session.add(esp)
+    
+    # Planes de Prepaga
+    planes = [
+        PlanPrepaga(
+            tipo=TipoPlan.INDIVIDUAL,
+            nombre="Plan Individual",
+            descripcion="Ideal para una persona",
+            precio_mensual=8000,
+            consultas_incluidas=10,
+            personas_maximas=1,
+            incluye_medico_online=False
+        ),
+        PlanPrepaga(
+            tipo=TipoPlan.PAREJA,
+            nombre="Plan Pareja",
+            descripcion="Para dos personas",
+            precio_mensual=14000,
+            consultas_incluidas=10,
+            personas_maximas=2,
+            incluye_medico_online=False
+        ),
+        PlanPrepaga(
+            tipo=TipoPlan.FAMILIAR,
+            nombre="Plan Familiar",
+            descripcion="Hasta 4 personas",
+            precio_mensual=24000,
+            consultas_incluidas=10,
+            personas_maximas=4,
+            incluye_medico_online=True
+        ),
+        PlanPrepaga(
+            tipo=TipoPlan.FAMILIAR_MAXI,
+            nombre="Plan Familiar Maxi",
+            descripcion="Más de 4 personas",
+            precio_mensual=32000,
+            consultas_incluidas=10,
+            personas_maximas=6,
+            incluye_medico_online=True
+        ),
+    ]
+    
+    for plan in planes:
+        db.session.add(plan)
+    
+    db.session.commit()
+    print("✅ Datos de ejemplo cargados (incluyendo planes de prepaga)")
 
 @app.route('/turnos/mis-turnos')
 @login_required
@@ -753,6 +1018,18 @@ def dashboard_admin():
                          ingresos_mes=ingresos_mes,
                          egresos_mes=egresos_mes,
                          balance=balance)
+    solicitudes_prepaga_count = SuscripcionPrepaga.query.filter_by(
+        estado=EstadoSuscripcion.PENDIENTE
+    ).count()
+    
+    pagos_mensuales_count = PagoMensualPrepaga.query.filter_by(
+        estado=EstadoPagoMensual.PENDIENTE
+    ).filter(PagoMensualPrepaga.comprobante.isnot(None)).count()
+    
+    return render_template('dashboard_admin.html',
+                         # ... variables existentes ...
+                         solicitudes_prepaga_count=solicitudes_prepaga_count,
+                         pagos_mensuales_count=pagos_mensuales_count)
 
 @app.route('/admin/buscar-paciente', methods=['GET', 'POST'])
 @role_required(RolUsuario.ADMIN, RolUsuario.RECEPCION)
@@ -1037,35 +1314,35 @@ def init_db():
     db.create_all()
     print("✅ Base de datos inicializada")
 
-@app.cli.command()
-def seed_db():
-    """Carga datos de ejemplo"""
+# @app.cli.command()
+# def seed_db():
+#     """Carga datos de ejemplo"""
     
-    # Admin
-    admin = Usuario(
-        nombre="Admin",
-        apellido="Sistema",
-        dni="00000000",
-        email="admin@consultorio.com",
-        telefono="1234567890",
-        rol=RolUsuario.ADMIN
-    )
-    admin.set_password("admin123")
-    db.session.add(admin)
+#     # Admin
+#     admin = Usuario(
+#         nombre="Admin",
+#         apellido="Sistema",
+#         dni="00000000",
+#         email="admin@consultorio.com",
+#         telefono="1234567890",
+#         rol=RolUsuario.ADMIN
+#     )
+#     admin.set_password("admin123")
+#     db.session.add(admin)
     
-    # Especialidades
-    especialidades = [
-        Especialidad(nombre="Clínica Médica", costo_consulta=15000, duracion_turno=30),
-        Especialidad(nombre="Pediatría", costo_consulta=15000, duracion_turno=30),
-        Especialidad(nombre="Cardiología", costo_consulta=20000, duracion_turno=45),
-        Especialidad(nombre="Dermatología", costo_consulta=18000, duracion_turno=30),
-    ]
+#     # Especialidades
+#     especialidades = [
+#         Especialidad(nombre="Clínica Médica", costo_consulta=15000, duracion_turno=30),
+#         Especialidad(nombre="Pediatría", costo_consulta=15000, duracion_turno=30),
+#         Especialidad(nombre="Cardiología", costo_consulta=20000, duracion_turno=45),
+#         Especialidad(nombre="Dermatología", costo_consulta=18000, duracion_turno=30),
+#     ]
     
-    for esp in especialidades:
-        db.session.add(esp)
+#     for esp in especialidades:
+#         db.session.add(esp)
     
-    db.session.commit()
-    print("✅ Datos de ejemplo cargados")
+#     db.session.commit()
+#     print("✅ Datos de ejemplo cargados")
 
 if __name__ == '__main__':
     app.run(debug=True)

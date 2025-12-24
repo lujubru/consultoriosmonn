@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Prepaga - Consultorios Monn{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <div style="max-width: 600px; margin: 0 auto; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <div style="font-size: 4rem; color: #007bff; margin-bottom: 20px;">🏥</div>
+        <h2 class="mb-3">¡Hola, {{ session.get('user_nombre') }}!</h2>
+        <p class="text-muted mb-4">
+            Todavía no formas parte de la <strong>Prepaga Monn</strong>. 
+            Suscribite hoy y disfrutá de consultas incluidas, atención online y beneficios exclusivos para vos y tu familia.
+        </p>
+        
+        <div class="d-grid gap-3">
+            <a href="{{ url_for('prepaga.ver_planes') }}" class="btn-primary" style="display: block; padding: 15px; text-decoration: none; font-weight: bold; font-size: 1.1rem;">
+                Ver Planes Disponibles
+            </a>
+            <p class="mt-3" style="font-size: 0.9rem;">
+                ¿Tenés dudas? <a href="https://wa.me/5491112345678" style="color: #25D366; font-weight: bold;">Consultanos por WhatsApp</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

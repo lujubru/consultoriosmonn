@@ -44,7 +44,6 @@
             transform: rotate(45deg) translate(-5px, -6px);
         }
         
-        /* Overlay para cerrar el menú - DEBE ESTAR FUERA DEL MEDIA QUERY */
         .menu-overlay {
             display: none;
             position: fixed;
@@ -60,12 +59,10 @@
             display: block;
         }
         
-        /* Compensar altura del header fijo */
         .main-content {
-            padding-top: 100px; /* Ajusta según la altura de tu header */
+            padding-top: 100px;
         }
         
-        /* Estilos responsive para el menú */
         @media (max-width: 768px) {
             .hamburger {
                 display: flex;
@@ -73,11 +70,11 @@
             
             .header-nav {
                 z-index: 100002 !important;
-                min-height: 70px !important; /* Altura reducida en móvil */
+                min-height: 70px !important;
             }
             
             .main-content {
-                padding-top: 80px; /* Menos padding en móvil */
+                padding-top: 80px;
             }
             
             .nav-actions {
@@ -138,17 +135,15 @@
             }
         }
         
-        /* Para pantallas grandes */
         @media (min-width: 769px) {
             .main-content {
-                padding-top: 100px; /* Más padding en desktop */
+                padding-top: 100px;
             }
         }
     </style>
 </head>
 <body>
     
-    <!-- Overlay para cerrar el menú en móviles -->
     <div class="menu-overlay" id="menuOverlay"></div>
     
     <nav class="header-nav">
@@ -157,7 +152,6 @@
             <span class="brand-name">Consultorios Monn</span>
         </a>
         
-        <!-- Botón hamburguesa -->
         <div class="hamburger" id="hamburger">
             <span></span>
             <span></span>
@@ -170,6 +164,8 @@
 
                 {% if session.get('user_rol') == 'paciente' %}
                     <a href="{{ url_for('dashboard_user') }}" class="btn-secondary">Mi Panel</a>
+                    <a href="{{ url_for('prepaga.mi_suscripcion') }}" class="btn-secondary">Prepaga Monn</a>
+                    
                     <a href="{{ url_for('nuevo_turno') }}" class="btn-secondary">Nuevo Turno</a>
                     <a href="{{ url_for('mis_turnos') }}" class="btn-secondary">Mis Turnos</a>
                     <a href="{{ url_for('historial') }}" class="btn-secondary">Historial</a>
@@ -178,6 +174,15 @@
                 {% if session.get('user_rol') in ['admin', 'recepcion'] %}
                     <a href="{{ url_for('dashboard_admin') }}" class="btn-secondary">Dashboard</a>
                     
+                    <div class="dropdown">
+                        <button class="btn-secondary dropdown-toggle">Prepaga Admin ▾</button>
+                        <div class="dropdown-content">
+                            <a href="{{ url_for('prepaga.admin_solicitudes') }}">Solicitudes Pendientes</a>
+                            <a href="{{ url_for('prepaga.admin_pagos_mensuales') }}">Pagos Mensuales</a>
+                            <a href="{{ url_for('prepaga.admin_suscripciones') }}">Todas las Suscripciones</a>
+                        </div>
+                    </div>
+
                     <div class="dropdown">
                         <button class="btn-secondary dropdown-toggle">Gestión ▾</button>
                         <div class="dropdown-content">
@@ -242,12 +247,10 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
     <script>
-        // Registro del Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register("{{ url_for('static', filename='js/sw.js') }}");
         }
 
-        // Funcionalidad del menú hamburguesa
         const hamburger = document.getElementById('hamburger');
         const navActions = document.getElementById('navActions');
         const menuOverlay = document.getElementById('menuOverlay');
@@ -270,7 +273,6 @@
         hamburger.addEventListener('click', toggleMenu);
         menuOverlay.addEventListener('click', closeMenu);
 
-        // Cerrar menú al hacer clic en un enlace (excepto dropdowns)
         navActions.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', (e) => {
                 if (!e.target.closest('.dropdown')) {
@@ -279,7 +281,6 @@
             });
         });
 
-        // Funcionalidad de dropdowns en móvil
         dropdowns.forEach(dropdown => {
             const toggle = dropdown.querySelector('.dropdown-toggle');
             if (toggle) {
@@ -292,7 +293,6 @@
             }
         });
 
-        // Cerrar menú al cambiar el tamaño de pantalla
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
                 closeMenu();

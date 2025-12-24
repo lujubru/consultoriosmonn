@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Pagar Mes - {{ pago.periodo_texto }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>Pago Mensual - {{ pago.periodo_texto }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p><strong>Monto a pagar:</strong> ${{ pago.monto }}</p>
+                        <p><strong>Fecha de vencimiento:</strong> {{ pago.fecha_vencimiento.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    
+                    {% if pago.estado.value == 'rechazado' %}
+                    <div class="alert alert-danger">
+                        <strong>Motivo del rechazo:</strong> {{ pago.motivo_rechazo }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label>Comprobante de Pago</label>
+                            <input type="file" name="comprobante" class="form-control-file" 
+                                   accept=".jpg,.jpeg,.png,.pdf" required>
+                            <small class="form-text text-muted">
+                                Formatos permitidos: JPG, PNG, PDF (máx 5MB)
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Observaciones (opcional)</label>
+                            <textarea name="observaciones" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">
+                            Subir Comprobante
+                        </button>
+                        <a href="{{ url_for('prepaga.mi_suscripcion') }}" class="btn btn-secondary btn-block">
+                            Volver
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

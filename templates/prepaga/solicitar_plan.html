@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitar {{ plan.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>Solicitar {{ plan.nombre }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5>Detalles del Plan</h5>
+                        <ul>
+                            <li><strong>Precio:</strong> ${{ plan.precio_mensual }} por mes</li>
+                            <li><strong>Consultas:</strong> {{ plan.consultas_incluidas }} por persona</li>
+                            <li><strong>Personas:</strong> Hasta {{ plan.personas_maximas }}</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label>Comprobante de Pago del Primer Mes</label>
+                            <input type="file" name="comprobante" class="form-control-file" 
+                                   accept=".jpg,.jpeg,.png,.pdf" required>
+                            <small class="form-text text-muted">
+                                Formatos permitidos: JPG, PNG, PDF (máx 5MB)
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Observaciones (opcional)</label>
+                            <textarea name="observaciones" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Su solicitud será revisada por un administrador. 
+                            Una vez aprobada, podrá comenzar a usar el servicio.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">
+                            Enviar Solicitud
+                        </button>
+                        <a href="{{ url_for('prepaga.ver_planes') }}" class="btn btn-secondary btn-block">
+                            Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

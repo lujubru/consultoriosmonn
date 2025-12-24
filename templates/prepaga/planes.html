@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Planes de Prepaga{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Planes de Prepaga Médica</h1>
+    
+    {% if suscripcion_activa %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Ya tiene una suscripción {{ suscripcion_activa.estado.value }}.
+            <a href="{{ url_for('prepaga.mi_suscripcion') }}">Ver mi suscripción</a>
+        </div>
+    {% endif %}
+    
+    <div class="row mt-4">
+        {% for plan in planes %}
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card {% if plan.tipo.value == 'pareja' %}border-primary{% endif %}">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4>{{ plan.nombre }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h2 class="text-primary">${{ plan.precio_mensual }}</h2>
+                        <p class="text-muted">por mes</p>
+                    </div>
+                    
+                    <p class="text-muted">{{ plan.descripcion }}</p>
+                    
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> {{ plan.consultas_incluidas }} consultas por persona</li>
+                        <li><i class="fas fa-check text-success"></i> Hasta {{ plan.personas_maximas }} persona(s)</li>
+                        <li><i class="fas fa-check text-success"></i> Todas las especialidades</li>
+                        {% if plan.incluye_medico_online %}
+                        <li><i class="fas fa-check text-success"></i> Médico online</li>
+                        {% endif %}
+                    </ul>
+                    
+                    {% if not suscripcion_activa %}
+                    <a href="{{ url_for('prepaga.solicitar_plan', plan_id=plan.id) }}" 
+                       class="btn btn-primary btn-block">
+                        Solicitar Plan
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

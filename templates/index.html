@@ -18,7 +18,7 @@
             {% if not session.get('user_id') %}
                 <a href="{{ url_for('register') }}" class="btn-primary">
                     Comenzar Ahora
-                    <span class="free-label">*Hasta 10 atenciones incluidas por mes</span>
+                    
                 </a>
                 <a href="#planes" class="btn-secondary">Ver Planes</a>
             {% else %}
@@ -71,7 +71,7 @@
             {% if not session.get('user_id') %}
                 <a href="{{ url_for('register') }}" class="btn-primary" style="width: 100%;">Elegir Plan</a>
             {% endif %}
-            <p class="plan-note">*Incluye hasta 10 consultas gratuitas por mes por persona</p>
+            <p class="plan-note">*Incluye hasta 10 consultas gratuitas en total</p>
         </div>
 
         <!-- Plan Familiar -->
@@ -88,11 +88,33 @@
                 <li>✓ Historial médico digital</li>
                 <li>✓ Sin costos adicionales por consulta</li>
                 <li>✓ Cobertura para hasta 4 personas</li>
+                <li>✓ Medico en linea para consultas sin moverte de tu casa</li>
             </ul>
             {% if not session.get('user_id') %}
                 <a href="{{ url_for('register') }}" class="btn-primary" style="width: 100%;">Elegir Plan</a>
             {% endif %}
-            <p class="plan-note">*Incluye hasta 10 consultas gratuitas por mes por persona</p>
+            <p class="plan-note">*Incluye hasta 10 consultas gratuitas en total</p>
+        </div>
+        <!-- Plan Maxi -->
+        <div class="plan-card">
+            <div class="plan-header">
+                <h3 class="plan-name">Familiar Maxi</h3>
+                <div class="plan-price">$X</div>
+                <p class="plan-price-label">Por mes</p>
+            </div>
+            <ul class="plan-features">
+                <li>✓ Hasta 10 atenciones mensuales por persona</li>
+                <li>✓ Todas las especialidades</li>
+                <li>✓ Turnos online 24/7</li>
+                <li>✓ Historial médico digital</li>
+                <li>✓ Sin costos adicionales por consulta</li>
+                <li>✓ Cobertura para mas de 4 personas</li>
+                <li>✓ Medico en linea para consultas sin moverte de tu casa</li>
+            </ul>
+            {% if not session.get('user_id') %}
+                <a href="{{ url_for('register') }}" class="btn-primary" style="width: 100%;">Elegir Plan</a>
+            {% endif %}
+            <p class="plan-note">*Incluye hasta 10 consultas gratuitas en total</p>
         </div>
     </div>
 </section>

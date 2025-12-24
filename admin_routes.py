@@ -103,7 +103,102 @@ def crear_especialidad():
     
 #     return render_template('admin/especialidad_form.html', especialidad=None)
 
+# ==================== EDITAR Y DESACTIVAR USUARIOS ADMIN ====================
 
+@admin_bp.route('/usuarios/editar/<int:id>', methods=['GET', 'POST'])
+@admin_only
+def editar_usuario_admin(id):
+    """Editar usuario administrativo o recepción"""
+    usuario = Usuario.query.get_or_404(id)
+    
+    if usuario.rol not in [RolUsuario.ADMIN, RolUsuario.RECEPCION]:
+        flash('El usuario no es administrativo', 'danger')
+        return redirect(url_for('admin.listar_usuarios_admin'))
+    
+    if request.method == 'POST':
+        try:
+            usuario.nombre = request.form.get('nombre')
+            usuario.apellido = request.form.get('apellido')
+            usuario.email = request.form.get('email')
+            usuario.telefono = request.form.get('telefono')
+            
+            # Actualizar contraseña si se proporciona
+            nueva_password = request.form.get('nueva_password')
+            if nueva_password:
+                usuario.set_password(nueva_password)
+            
+            db.session.commit()
+            
+            log_admin_action(
+                accion='MODIFICAR_USUARIO_ADMIN',
+                tabla='usuarios',
+                registro_id=usuario.id
+            )
+            
+            flash(f'Usuario {usuario.nombre} {usuario.apellido} actualizado', 'success')
+            return redirect(url_for('admin.listar_usuarios_admin'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'danger')
+    
+    return render_template('admin/usuario_admin_form.html', usuario=usuario)
+
+
+@admin_bp.route('/usuarios/desactivar/<int:id>', methods=['POST'])
+@admin_only
+def desactivar_usuario_admin(id):
+    """Desactivar usuario administrativo"""
+    usuario = Usuario.query.get_or_404(id)
+    
+    # No permitir desactivar al único admin
+    if usuario.rol == RolUsuario.ADMIN:
+        cant_admins = Usuario.query.filter_by(rol=RolUsuario.ADMIN, activo=True).count()
+        if cant_admins <= 1:
+            flash('No se puede desactivar el único administrador activo', 'danger')
+            return redirect(url_for('admin.listar_usuarios_admin'))
+    
+    try:
+        usuario.activo = False
+        db.session.commit()
+        
+        log_admin_action(
+            accion='DESACTIVAR_USUARIO_ADMIN',
+            tabla='usuarios',
+            registro_id=usuario.id
+        )
+        
+        flash(f'Usuario {usuario.nombre} {usuario.apellido} desactivado', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.listar_usuarios_admin'))
+
+
+@admin_bp.route('/usuarios/activar/<int:id>', methods=['POST'])
+@admin_only
+def activar_usuario_admin(id):
+    """Activar usuario administrativo"""
+    usuario = Usuario.query.get_or_404(id)
+    
+    try:
+        usuario.activo = True
+        db.session.commit()
+        
+        log_admin_action(
+            accion='ACTIVAR_USUARIO_ADMIN',
+            tabla='usuarios',
+            registro_id=usuario.id
+        )
+        
+        flash(f'Usuario {usuario.nombre} {usuario.apellido} activado', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin.listar_usuarios_admin'))
+    
 @admin_bp.route('/especialidades/editar/<int:id>', methods=['GET', 'POST'])
 @permission_required('especialidades:editar')
 def editar_especialidad(id):

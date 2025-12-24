@@ -3,6 +3,13 @@
 {% block title %}Inicio - Consultorios Monn{% endblock %}
 
 {% block content %}
+<!-- Banner de Instalación PWA - Solo en Index -->
+<div id="install-banner" style="display: none; background: #007bff; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 9999;">
+    <span>¡Descarga nuestra App para una mejor experiencia!</span>
+    <button id="btn-install" class="btn-primary" style="margin-left: 10px; background: white; color: #007bff;">Instalar</button>
+    <button onclick="document.getElementById('install-banner').style.display='none'" style="background: none; border: none; color: white; margin-left: 10px; cursor: pointer;">✕</button>
+</div>
+
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="hero-content">
@@ -162,4 +169,31 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Script PWA solo para la página de inicio
+    let deferredPrompt;
+    const installBanner = document.getElementById('install-banner');
+    const btnInstall = document.getElementById('btn-install');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBanner.style.display = 'block';
+    });
+
+    btnInstall.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('El usuario aceptó la instalación');
+            }
+            deferredPrompt = null;
+            installBanner.style.display = 'none';
+        }
+    });
+</script>
 {% endblock %}
